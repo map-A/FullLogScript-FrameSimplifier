@@ -1,1 +1,0 @@
-# FullLogScript-FrameSimplifier
