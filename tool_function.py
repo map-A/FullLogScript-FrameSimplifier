@@ -71,7 +71,6 @@ def is_empty(line):
 
 
 def is_func_call(line):
-    
     pattern = r'\w+\(.*\);'  
     if re.match(pattern, line):
         return True
@@ -164,9 +163,21 @@ def parse_statement(string):
   match = re.match(pattern, string)
   if match:
     a = match.group(1)
-    b = match.group(2) if match.group(2) else ""
-    c = match.group(3)
+    b = match.group(2) 
+    c = match.group(3)if match.group(3) else ""
     d = match.group(4)
     return a,b,c,d
   else:
     return None
+  
+# 解析一个赋值语句，返回赋值变量，赋值
+def parse_func_assignment(string):
+   print(string)
+   pattern = r'(.*)\s*=\s*(.*)'
+   match = re.match(pattern, string)
+   if match:
+    a = match.group(1)
+    b = match.group(2) if match.group(2) else ""
+    return a,b
+   else:
+      return None
