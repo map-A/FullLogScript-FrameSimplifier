@@ -71,6 +71,7 @@ def is_empty(line):
 
 
 def is_func_call(line):
+    
     pattern = r'\w+\(.*\);'  
     if re.match(pattern, line):
         return True
@@ -86,7 +87,7 @@ def is_object_func_call(line):
 
 
 def is_other(line):
-    if is_comment(line) or is_empty(line) or is_function_call(line) or is_object_function_call(line):
+    if is_comment(line) or is_empty(line) or is_func_call(line) or is_object_func_call(line):
         return False
     else:
         return True
@@ -159,13 +160,13 @@ def parse_object_func_call(statement):
 
 # 解析一个声明语句，返回声明变量类型，声明变量，赋值
 def parse_statement(string):
-  pattern = r'(\w+\*?)\s*([\w+]+\[.*?]*)\s*=\s*(.*?);'
+  pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*(.*?);'
   match = re.match(pattern, string)
   if match:
     a = match.group(1)
     b = match.group(2) if match.group(2) else ""
     c = match.group(3)
-    return a,b,c
+    d = match.group(4)
+    return a,b,c,d
   else:
     return None
-
