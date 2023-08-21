@@ -86,6 +86,9 @@ def is_object_func_call(line):
 
 
 def is_other(line):
+    ## other line 指的是形如 A B[2] = C的语句，
+    # 还有 axCreateWindow(x = 0, y = 0, w = 1280, h = 720, depth = 0, xvis = NULL, cfg = NULL)=win_1; 
+    # 这条语句默认加入吧
     if is_comment(line) or is_empty(line) or is_func_call(line) or is_object_func_call(line):
         return False
     else:
@@ -126,7 +129,7 @@ def is_macro(string):
   :param string
   :return:bool
   """
-  return bool(re.fullmatch(r'[A-Z0-9_]+', string))
+  return bool(re.fullmatch(r'\s*[A-Z0-9_]+\s*', string))
 
 
 def is_valid_variable(string):
@@ -158,7 +161,7 @@ def parse_object_func_call(statement):
 
 # 解析一个声明语句，返回声明变量类型，声明变量，赋值
 def parse_statement(string):
-  pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*(.*?);'
+  pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*\((.*?)\);'
   match = re.match(pattern, string)
   if match:
     a = match.group(1)

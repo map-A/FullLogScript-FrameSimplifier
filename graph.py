@@ -18,6 +18,10 @@ set_func = set({'RSSetState','OMSetBlendState','PSSetShader','VSSetConstantBuffe
 other_func = set({'Flush','ClearState', 'Present', 
               'Draw','DrawIndexedInstanced','DrawIndexed'})
 
+
+# 函数调用名称
+a = {'axPath', 'D3D11CreateDevice', 'axdUpdatePtrFromFileInCtx11', 'CreateDXGIFactory1', 'axdRelease'}
+
 class Node:
     def __init__(self, id, line_pos):
         self.id = id # 资源名称
@@ -26,7 +30,7 @@ class Node:
     def print(self):
         print(self.id, self.line_pos)
 
-
+## 应该建立有向图
 class Graph:
     def __init__(self):
         self.vertices = {}
@@ -38,7 +42,9 @@ class Graph:
     
 
     def add_vertex(self, node):
-        self.vertices[node.id] = node
+        if node.id not in self.vertices:
+            self.vertices[node.id] = []
+        self.vertices[node.id].append(node)
 
 
     def add_edge(self, vertex1, vertex2):
@@ -47,17 +53,30 @@ class Graph:
             if vertex1 not in self.edges:
                 self.edges[vertex1] = []
             self.edges[vertex1].append(vertex2)
-            
+
+
     def get_neighbors(self, vertex):
         return self.vertices[vertex]
     
     def print(self):
-        for key in self.vertices:
-            self.vertices[key].print()
+        self.print_vertices()
+        self.print_edges()
 
     def print_vertices(self):
         for key in self.vertices:
-            print(key)
+            for node in self.vertices[key]:
+                node.print()
     def print_edges(self):
         for key in self.edges:
-            print(key, "->",self.edges[key])
+            print(key, "->",self.edges[key], self.edges[key])
+
+class NodeList():
+    def __init__(self):
+        self.nodes = []
+    
+    def add_node(self, node):
+        self.nodes.append(node)
+    
+    def print(self):
+        for node in self.nodes:
+            node.print()
