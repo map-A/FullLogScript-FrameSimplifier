@@ -133,16 +133,15 @@ def is_valid_variable(string):
     pattern = r'^[a-zA-Z][a-zA-Z0-9_]*$'
     return re.match(pattern, string) and any(c.islower() for c in string)
 
-### 如果是一个声明，那么只需要提取等号左边的变量，
+
 # 如果是函数，函数的种类不同，提取的变量也不同
-
-
 # 解析一个函数调用，返回函数名和参数列表
 def parse_func_call(func_call):
     func_name = func_call.split('(')[0]
     func_args = func_call.split('(')[1].split(')')[0].split(',')
     func_args = [arg.strip() for arg in func_args]
     return func_name, func_args
+
 #解析一个对象函数调用，返回对象名、函数名和参数列表
 def parse_object_func_call(statement):
     pattern = r'(\w+)\s*->\s*(\w+)\s*\((.*?)\);'
@@ -172,7 +171,6 @@ def parse_statement(string):
   
 # 解析一个赋值语句，返回赋值变量，赋值
 def parse_func_assignment(string):
-   print(string)
    pattern = r'(.*)\s*=\s*(.*)'
    match = re.match(pattern, string)
    if match:
