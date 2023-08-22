@@ -1,6 +1,6 @@
 # 根据已有的资源创建了另一个资源
 # 原有的资源状态没有改变，创建另一个等同于改变了它的状态
-create_func = set({'Map','GetBuffer', 'CreateRenderTargetView','CreateGeometryShader','CreateQuery',
+create_func = set({'GetBuffer', 'CreateRenderTargetView','CreateGeometryShader','CreateQuery',
                'CreateUnorderedAccessView','CreateInputLayout','CreateSwapChain','CreateDepthStencilView',
                'CreateVertexShader','CreatePixelShader','CreateShaderResourceView','CreateSamplerState',
                'CreateDepthStencilState','CreateBlendState', 'CreateTexture2D','CreateComputeShader',
@@ -13,7 +13,10 @@ set_func = set({'RSSetState','OMSetBlendState','PSSetShader','VSSetConstantBuffe
             'IASetPrimitiveTopology', 'VSSetShader', 'VSSetShaderResources',
             'ClearRenderTargetView','ClearDepthStencilView', 
             'CopyResource','CopyStructureCount', 
-            'DiscardResource','DiscardView','Unmap','DrawInstancedIndirect'})
+            'DiscardResource','DiscardView','DrawInstancedIndirect'})
+
+map_func = set({'Map','Unmap'})
+
 
 # 只做行为动作，不依赖任何资源
 other_func = set({'Flush','ClearState', 'Present', 
@@ -41,6 +44,11 @@ class Graph:
     def has_vertex(self, node):
         return node.id in self.vertices
     
+    def has_edge(self, vertex1, vertex2):
+        if vertex1.id in self.edges:
+            return vertex2 in self.edges[vertex1.id]
+        return False
+    
     def get_node(self,node_id):
         # 根据id 获取途中属性为id的所有位置
         if (self.has_vertex(Node(node_id,[]))):
@@ -49,7 +57,7 @@ class Graph:
     
     def get_neighbors(self, node_id):
         # 获取node_id的邻居节点
-        if node_id  in self.edges:
+        if node_id in self.edges:
             return self.edges[node_id]
         return None
 
@@ -62,7 +70,7 @@ class Graph:
     def add_edge(self, vertex1, vertex2):
         # vertex1.id -> vertex2
         if self.has_vertex(vertex1) and self.has_vertex(vertex2):
-            if vertex1 not in self.edges:
+            if vertex1.id not in self.edges:
                 self.edges[vertex1.id] = []
             self.edges[vertex1.id].append(vertex2)
 
@@ -81,20 +89,22 @@ class Graph:
             print(key, "->",self.edges[key], self.edges[key])
 
     def dfs(self,node_id,res):
-        #从属性值为id的开始深度遍历，遍历的结果存到res数组中
+        #从属性值为node_id的开始深度遍历，遍历的结果存到res数组中
         stack = [node_id]
         visited = set()
         while stack:
             cur = stack.pop()
             if cur not in visited:
                 visited.add(cur)
-                res.append(cur)
+                for i in self.get_node(cur):
+                    res.append(i)
                 neibo = self.get_neighbors(cur)
                 if neibo:
                     for nxt in neibo:
-                        if nxt not in visited:
-                            stack.append(nxt)
-        return res
+                        res.append(nxt)
+                        if nxt.id not in visited:
+                            stack.append(nxt.id)
+                    print(stack)
 
 class NodeList():
     def __init__(self):
@@ -106,3 +116,18 @@ class NodeList():
     def print(self):
         for node in self.nodes:
             node.print()
+        
+
+class MapStack:
+    def __init__(self):
+        # 格式是：[(map,line_pos),...]
+        self.stack = []
+
+    def push(self, node):
+        self.stack.append(node)
+
+    def pop(self):
+        return self.stack.pop()
+    
+    def top(self):
+        return self.stack[-1]
