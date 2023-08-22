@@ -161,7 +161,7 @@ def parse_object_func_call(statement):
 
 # 解析一个声明语句，返回声明变量类型，声明变量，赋值
 def parse_statement(string):
-  pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*\((.*?)\);'
+  pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*\(?(.*?)\)?;'
   match = re.match(pattern, string)
   if match:
     a = match.group(1)
