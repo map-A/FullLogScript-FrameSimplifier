@@ -97,14 +97,13 @@ class Graph:
             if cur not in visited:
                 visited.add(cur)
                 for i in self.get_node(cur):
-                    res.append(i)
+                    res.append(i.line_pos)
                 neibo = self.get_neighbors(cur)
                 if neibo:
                     for nxt in neibo:
-                        res.append(nxt)
+                        res.append(nxt.line_pos)
                         if nxt.id not in visited:
                             stack.append(nxt.id)
-                    print(stack)
 
 class NodeList():
     def __init__(self):
