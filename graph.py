@@ -7,13 +7,15 @@ create_func = set({'GetBuffer', 'CreateRenderTargetView','CreateGeometryShader',
                 'CreateRasterizerState','CreateBuffer'})
 
 # 设置已有的资源
-set_func = set({'RSSetState','OMSetBlendState','PSSetShader','VSSetConstantBuffers','OMSetRenderTargets','GSSetConstantBuffers',
+set_func = set({'RSSetState','PSSetShader','VSSetConstantBuffers','GSSetConstantBuffers',
             'IASetIndexBuffer','PSSetConstantBuffers','RSSetViewports','GSSetShaderResources','PSSetSamplers','PSSetShaderResources', 
             'IASetVertexBuffers','IASetInputLayout', 'OMSetRenderTargetsAndUnorderedAccessViews', 'GSSetShader','OMSetDepthStencilState',
             'IASetPrimitiveTopology', 'VSSetShader', 'VSSetShaderResources',
-            'ClearRenderTargetView','ClearDepthStencilView', 
+            'ClearDepthStencilView', 
             'CopyResource','CopyStructureCount', 
             'DiscardResource','DiscardView','DrawInstancedIndirect'})
+
+only_set_func = set({'OMSetRenderTargets','ClearRenderTargetView','OMSetBlendState'})
 
 map_func = set({'Map','Unmap'})
 
