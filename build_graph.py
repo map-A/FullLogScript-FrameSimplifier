@@ -9,7 +9,7 @@ from graph import *
 # 3. 判断语句种类
 # 4. 处理语句
 
-def read_to_graph(filename,graph,nodelist,mapstack):
+def read_to_graph(filename,graph,nodelists,mapstack):
     line_pos = 0
     with open(filename, "r") as f:
         for line in f:
@@ -42,10 +42,10 @@ def read_to_graph(filename,graph,nodelist,mapstack):
                     
                 except:
                     node = Node("NULL",[filename,line_pos])
-                    nodelist.add_node(node)
+                    nodelists.add_node(node)
             elif is_object_func_call(line):
                 res = parse_object_func_call(line) # 解析对象调用
-                if res[1] in create_func:
+                if res[1] in obj_create_func:
                     # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们
                     ext_node_list = [] # 已经存在的节点
                     dontext_node_list = [] # 不存在的节点
@@ -72,10 +72,8 @@ def read_to_graph(filename,graph,nodelist,mapstack):
                             # 访问pBuf_14的时候，需要去访问pBuf_13，所以是pBuf_14->pBuf_13
                             graph.add_edge(dont,ex)
 
-                elif res[1] in set_func:
-                    # TODO：如果在设置函数，将已有的一个资源设置为另一个资源的属性
-                    # 一般是前面几个参数是资源，最后一个参数是属性
-                    node_list = []
+                elif res[1] in obj_single_set_func:
+                    # TODO: 这类set只作用于一个变量
                     for i in res[2]:
                         p_v = parse_func_assignment(i) #parameters and values
                         if(is_macro(p_v[1])):
@@ -85,12 +83,24 @@ def read_to_graph(filename,graph,nodelist,mapstack):
                         elif(is_valid_variable(p_v[1])):
                             node = Node(p_v[1],[filename,line_pos])
                             graph.add_vertex(node)
-                    # # 将前面的资源与最后一个资源进行连接
-                    # for i in range(len(node_list)-2):
-                    #     graph.add_edge(node_list[len(node_list)-1],node_list[i])
-                elif res[1] in only_set_func:
-                    #如OMSetRenderTargets，某一帧用到了某一些资源，并不需要参与构图
-                    pass
+                            
+                elif res[1] in obj_multi_set_func:
+                    # TODO: 这类set作用于多个变量,需要将他们连接起来
+                    node_list = []
+                    for i in res[2]:
+                        p_v = parse_func_assignment(i) #parameters and values
+                        if(is_macro(p_v[1])):
+                            pass
+                        elif(is_decimal_or_hex(p_v[1])):
+                            pass
+                        elif(is_valid_variable(p_v[1])):
+                            node = Node(p_v[1],[filename,line_pos])
+                            node_list.append(node)
+                            graph.add_vertex(node)
+                    for i in range(len(node_list)-1):
+                        for j in range(i,len(node_list)-1):
+                            graph.add_edge(node_list[i],node_list[j])
+                            graph.add_edge(node_list[j],node_list[i])
 
                 elif res[1] in map_func:    
                     # TODO: map和unmap必须成对存在，他们的特点是第一个resource一样
@@ -105,10 +115,8 @@ def read_to_graph(filename,graph,nodelist,mapstack):
                             elif(is_decimal_or_hex(p_v[1])):
                                 pass
                             elif(is_valid_variable(p_v[1])):
-                                
                                 # map的资源不需要加入到vertex中
                                 node = Node(p_v[1],[filename,line_pos])
-                                
                                 if not graph.has_vertex(node):
                                     graph.add_vertex(node)
                                     dontext_node_list.append(node)
@@ -130,14 +138,23 @@ def read_to_graph(filename,graph,nodelist,mapstack):
                                
                                 mapstack.pop()
 
-                elif res[1] in other_func:
+                elif res[1] in must_add:
                     # TODO：如果在其他的函数中，保证加入到图中
-                    node = Node("NULL",[filename,line_pos])
-                    nodelist.add_node(node)
+                    node = Node("MUST",[filename,line_pos])
+                    nodelists.add_node(node)
+                elif res[1] in other_func:
+                    pass
             elif is_func_call(line):
-                # TODO: 默认保存
-                node = Node("NULL",[filename,line_pos])
-                nodelist.add_node(node)      
+                res = parse_func_call(line)
+                if(res[0] in map_func):
+                    node = Node(parse_func_assignment(res[1][1])[1],[filename,line_pos])
+                    graph.add_vertex(node)
+                elif(res[0] in must_add):
+                    node = Node(res[1][0],[filename,line_pos])
+                    graph.add_vertex(node)
+                else:
+                    node = Node("NULL_1",[filename,line_pos])
+                    nodelists.add_node(node)    
             line_pos = line_pos+1
 
 

@@ -1,32 +1,46 @@
 # 根据已有的资源创建了另一个资源
 # 原有的资源状态没有改变，创建另一个等同于改变了它的状态
-create_func = set({'GetBuffer', 'CreateRenderTargetView','CreateGeometryShader','CreateQuery',
-               'CreateUnorderedAccessView','CreateInputLayout','CreateSwapChain','CreateDepthStencilView',
-               'CreateVertexShader','CreatePixelShader','CreateShaderResourceView','CreateSamplerState',
-               'CreateDepthStencilState','CreateBlendState', 'CreateTexture2D','CreateComputeShader',
-                'CreateRasterizerState','CreateBuffer'})
+obj_create_func = set({'GetBuffer', 'CreateRenderTargetView','CreateGeometryShader','CreateQuery',
+               'CreateUnorderedAccessView','CreateInputLayout','CreateSwapChain',
+               'CreateDepthStencilView',
+               'CreateVertexShader','CreatePixelShader','CreateShaderResourceView',
+               'CreateSamplerState','CreateDepthStencilState','CreateBlendState', 
+               'CreateTexture2D','CreateComputeShader',
+                'CreateRasterizerState','CreateBuffer',
+                })
 
-# 设置已有的资源
-set_func = set({'RSSetState','PSSetShader','VSSetConstantBuffers','GSSetConstantBuffers',
-            'IASetIndexBuffer','PSSetConstantBuffers','RSSetViewports','GSSetShaderResources','PSSetSamplers','PSSetShaderResources', 
-            'IASetVertexBuffers','IASetInputLayout', 'OMSetRenderTargetsAndUnorderedAccessViews', 'GSSetShader','OMSetDepthStencilState',
-            'IASetPrimitiveTopology', 'VSSetShader', 'VSSetShaderResources',
-            'ClearDepthStencilView', 
-            'CopyResource','CopyStructureCount', 
-            'DiscardResource','DiscardView','DrawInstancedIndirect'})
+# 设置已有的资源 
+obj_single_set_func =set({'ClearDepthStencilView','PSSetShader',
+                          'RSSetState','VSSetConstantBuffers',
+                          'GSSetConstantBuffers','IASetIndexBuffer',
+                          'PSSetConstantBuffers', 'RSSetViewports',
+                          'GSSetShaderResources','PSSetSamplers',
+                          'PSSetShaderResources','IASetInputLayout',
+                          'GSSetShader','OMSetDepthStencilState',
+                          'VSSetShader','VSSetShaderResources',
+                          'DiscardResource','DrawInstancedIndirect','DiscardView'
+                          })
 
-only_set_func = set({'OMSetRenderTargets','ClearRenderTargetView','OMSetBlendState'})
 
-map_func = set({'Map','Unmap'})
 
+
+obj_multi_set_func = set({'OMSetRenderTargets','OMSetBlendState',
+                          'IASetVertexBuffers','OMSetRenderTargetsAndUnorderedAccessViews',
+                          'ClearRenderTargetView','CopyStructureCount', 
+                          })
+
+
+
+map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
+
+
+
+# 一定添加的，不管是不是资源
+must_add = set({'CopyResource','IASetPrimitiveTopology','axdRelease',})
 
 # 只做行为动作，不依赖任何资源
-other_func = set({'Flush','ClearState', 'Present', 
-              'Draw','DrawIndexedInstanced','DrawIndexed'})
+other_func = set({'Flush','ClearState','Present', 'Draw','DrawIndexedInstanced','DrawIndexed'})
 
-
-# 函数调用名称
-a = {'axPath', 'D3D11CreateDevice', 'axdUpdatePtrFromFileInCtx11', 'CreateDXGIFactory1', 'axdRelease'}
 
 class Node:
     def __init__(self, id, line_pos):
@@ -107,13 +121,19 @@ class Graph:
                         if nxt.id not in visited:
                             stack.append(nxt.id)
 
-class NodeList():
+class NodeLists():
     def __init__(self):
-        self.nodes = []
+        self.nodes = {}
     
     def add_node(self, node):
-        self.nodes.append(node)
+        if node.id not in self.nodes:
+            self.nodes[node.id] = []
+        self.nodes[node.id].append(node)
     
+    def get_node(self,node_id):
+        # 根据id 获取途中属性为id的所有位置
+        return self.nodes[node_id]
+
     def print(self):
         for node in self.nodes:
             node.print()
