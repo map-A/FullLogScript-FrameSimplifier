@@ -1,16 +1,28 @@
 # 根据已有的资源创建了另一个资源
 # 原有的资源状态没有改变，创建另一个等同于改变了它的状态
-obj_create_func = set({'GetBuffer', 'CreateRenderTargetView','CreateGeometryShader','CreateQuery',
-               'CreateUnorderedAccessView','CreateInputLayout','CreateSwapChain',
-               'CreateDepthStencilView',
+# device 的函数, 一定要添加的，创建了资源
+device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometryShader','CreateQuery',
+               'CreateUnorderedAccessView','CreateInputLayout','CreateDepthStencilView',
                'CreateVertexShader','CreatePixelShader','CreateShaderResourceView',
                'CreateSamplerState','CreateDepthStencilState','CreateBlendState', 
                'CreateTexture2D','CreateComputeShader',
                 'CreateRasterizerState','CreateBuffer',
                 })
 
-# 设置已有的资源 
-obj_single_set_func =set({'ClearDepthStencilView','PSSetShader',
+IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetPrimitiveTopology','IASetInputLayout',})
+RS_stage_func = set({'RSSetState','RSSetViewports',})
+VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
+PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
+GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources',})
+OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendState','OMSetRenderTargetsAndUnorderedAccessViews',
+                'ClearDepthStencilView','ClearRenderTargetView','CopyStructureCount', 
+                'DiscardView','DiscardResource','DrawInstancedIndirect',
+                })
+CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',})
+draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed'})
+
+
+obj_set_func =set({'ClearDepthStencilView','PSSetShader',
                           'RSSetState','VSSetConstantBuffers',
                           'GSSetConstantBuffers','IASetIndexBuffer',
                           'PSSetConstantBuffers', 'RSSetViewports',
@@ -18,28 +30,19 @@ obj_single_set_func =set({'ClearDepthStencilView','PSSetShader',
                           'PSSetShaderResources','IASetInputLayout',
                           'GSSetShader','OMSetDepthStencilState',
                           'VSSetShader','VSSetShaderResources',
-                          'DiscardResource','DrawInstancedIndirect','DiscardView'
-                          })
-
-
-
-
-obj_multi_set_func = set({'OMSetRenderTargets','OMSetBlendState',
+                          'DiscardResource','DrawInstancedIndirect','DiscardView','OMSetRenderTargets','OMSetBlendState',
                           'IASetVertexBuffers','OMSetRenderTargetsAndUnorderedAccessViews',
-                          'ClearRenderTargetView','CopyStructureCount', 
+                          'ClearRenderTargetView','CopyStructureCount', 'CopyResource',
                           })
-
 
 
 map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 
 
-
 # 一定添加的，不管是不是资源
-must_add = set({'CopyResource','IASetPrimitiveTopology','axdRelease',})
+must_add = set({'axdRelease','GetBuffer',})
 
-# 只做行为动作，不依赖任何资源
-other_func = set({'Flush','ClearState','Present', 'Draw','DrawIndexedInstanced','DrawIndexed'})
+other_func = set({'Flush','ClearState','Present',})
 
 
 class Node:
@@ -69,13 +72,13 @@ class Graph:
         # 根据id 获取途中属性为id的所有位置
         if (self.has_vertex(Node(node_id,[]))):
             return self.vertices[node_id]
-        return None
+        return []
     
     def get_neighbors(self, node_id):
         # 获取node_id的邻居节点
         if node_id in self.edges:
             return self.edges[node_id]
-        return None
+        return []
 
     def add_vertex(self, node):
         if node.id not in self.vertices:
@@ -152,3 +155,34 @@ class MapStack:
     
     def top(self):
         return self.stack[-1]
+    
+
+class DrawVector:
+    def __init__(self):
+        self.__drawVector__ = []
+        self.__pivote__ = []
+    def add_draw(self,start_pos,end_pos):
+        self.__drawVector__.append([start_pos,end_pos])
+
+    def add_pivote(self,pos):
+        self.__pivote__ = pos
+    
+    def print_drawvector(self):
+        for i in self.__drawVector__:
+            print(i)
+        # print(self.__drawVector__)
+    def print_pivote(self):
+        print(self.__pivote__)
+    
+    def get_target_drawvector(self,index):
+        if index <0:
+            return []
+        
+        # 根据pivote获取drawvector,某一个draw在pivote的后面，某一个draw在pivote的前面
+        for i in range(0,len(self.__drawVector__)):
+            if self.__drawVector__[i][0][0] == self.__pivote__[0]:
+               
+                if(self.__drawVector__[i][0][1] > self.__pivote__[1]):
+                    print(i) #1015 
+                    return self.__drawVector__[index:]
+        return []

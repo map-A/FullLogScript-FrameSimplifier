@@ -10,53 +10,75 @@ import shutil
 
 # 建图后该怎么进行重构，
 # 先试着截取1帧
+# 解决文件filename的依赖，把依赖保存到new_file_list中
+
+def solve_line_dependency(filename,line_pos,line,graph,new_file_list):
+    
+    if is_comment(line):
+        pass
+    elif is_empty(line):
+        pass
+    elif is_other(line):
+        new_file_list.append([filename,line_pos])
+        res = parse_statement(line)
+        p_v = map(str.strip, res[3].split(","))
+        for i in p_v:
+            # 第一个是类型，第二个是变量名称，第三个是数组，第四个才是依赖
+            if( is_decimal_or_hex(i)):
+                pass
+            elif(is_macro(i)):
+                pass
+            elif(is_valid_variable(i)):
+                # 当是合法的变量时候，应该去以res[i]去深度遍历所有依赖的节点。
+                dependency_node = [] 
+                graph.dfs(i,dependency_node)
+                new_file_list.extend(dependency_node)
+            else:
+                pass
+    elif is_object_func_call(line):
+        
+        new_file_list.append([filename,line_pos])
+        res = parse_object_func_call(line)
+        # 对象->函数(参数)
+        for i in res[2]:
+            p_v = parse_func_assignment(i)
+            if(is_macro(p_v[1])):
+                pass
+            elif(is_decimal_or_hex(p_v[1])):
+                pass
+            elif(is_valid_variable(p_v[1])):
+                dependency_node = [] 
+                graph.dfs(p_v[1],dependency_node)
+                new_file_list.extend(dependency_node)
+    elif is_func_call(line):
+        new_file_list.append([filename,line_pos])
+
 
 def solve_dependency(filename,graph,nodelists,new_file_list):
     with open(filename, 'r') as f:
         line_pos = 0
         for line in f:
-            if is_comment(line):
-                pass
-            elif is_empty(line):
-                pass
-            elif is_other(line):
-                new_file_list.append([filename,line_pos])
-                res = parse_statement(line)
-                p_v = map(str.strip, res[3].split(","))
-                for i in p_v:
-                    # 第一个是类型，第二个是变量名称，第三个是数组，第四个才是依赖
-                    if( is_decimal_or_hex(i)):
-                        pass
-                    elif(is_macro(i)):
-                        pass
-                    elif(is_valid_variable(i)):
-                        # 当是合法的变量时候，应该去以res[i]去深度遍历所有依赖的节点。
-                        dependency_node = [] 
-                        graph.dfs(i,dependency_node)
-                        new_file_list.extend(dependency_node)
-                    else:
-                        pass
-            elif is_object_func_call(line):
-                new_file_list.append([filename,line_pos])
-                res = parse_object_func_call(line)
-                # 对象->函数(参数)
-                for i in res[2]:
-                    p_v = parse_func_assignment(i)
-                    if(is_macro(p_v[1])):
-                        pass
-                    elif(is_decimal_or_hex(p_v[1])):
-                        pass
-                    elif(is_valid_variable(p_v[1])):
-                        dependency_node = [] 
-                        graph.dfs(p_v[1],dependency_node)
-                        new_file_list.extend(dependency_node)
-            elif is_func_call(line):
-                new_file_list.append([filename,line_pos])
+            solve_line_dependency(filename,line_pos,line,graph,new_file_list)
             # 如果这行引用到了其他文件的变量，则去graph寻找            
             line_pos = line_pos+1
-    for node in nodelists.nodes["MUST"]:
-        new_file_list.append(node.line_pos)
-    
+    for i in nodelists.nodes:
+        for node in nodelists.nodes[i]: 
+            new_file_list.append(node.line_pos)
+            graph.dfs(node.id,new_file_list)
+
+
+def solve_other(graph,drawvector,new_file_list,start_draw_index):
+    # 把drawvector中pivote后面的new_file_list中
+    for i in drawvector.get_target_drawvector(start_draw_index):
+        with open(i[0][0], 'r') as f:
+            lines = f.readlines()
+            for j in range(i[0][1],i[1][1]+1):
+                new_file_list.append([i[0][0],j])
+                # 解决于lines[j]有关的依赖
+                
+                solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+
+
 
 def create_new_sdx_file(new_file_list,frame_index,new_filename):
     def custom_sort(item):
@@ -91,7 +113,7 @@ def create_new_sdx_file(new_file_list,frame_index,new_filename):
             if name_num:
                 name_num = int(name_num.group(1))
             ## 不包括>frame_index的文件
-            if name_num==0 or name_num>frame_index:
+            if name_num==0 or name_num>=frame_index:
                 continue
             with open(filename, 'r') as original_file:
                 lines = original_file.readlines()
@@ -99,7 +121,7 @@ def create_new_sdx_file(new_file_list,frame_index,new_filename):
                 new_file.write(lines[line_num])
 
         
-def simplify_one_frame(graph,nodelist,src_folder_path,targe_frame_index,des_folder_path):
+def simplify_one_frame(graph,nodelist,drawvector,src_folder_path,targe_frame_index,des_folder_path,start_draw_index=0):
     filenames = os.listdir(src_folder_path)
     source_files =[]
     for filename in filenames:
@@ -113,6 +135,7 @@ def simplify_one_frame(graph,nodelist,src_folder_path,targe_frame_index,des_fold
     new_file_list = [] # 保存文件行所在位置
 
     solve_dependency(src_folder_path+source_files[1],graph,nodelist,new_file_list)
+    solve_other(graph,drawvector,new_file_list,start_draw_index)
     create_new_sdx_file(new_file_list,targe_frame_index,des_folder_path+source_files[1].replace(str(targe_frame_index),str(1)))
     shutil.copy(src_folder_path+source_files[1], des_folder_path+source_files[1].replace(str(targe_frame_index),str(2)))
       

@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 
 def read_dir(folder_path):
     """
@@ -52,6 +53,16 @@ def trim_files(src_path,target_path):
                         sentence += line
         if sentence:
             out_f.write(sentence + '\n')
+
+def merge_files(src_path, target_path,start_index,target_index):
+    with open(target_path, 'w') as target_file:
+        file_list = read_dir(src_path)
+        for filename in file_list:
+            if filename.split("_")[1][:-4].isdigit():
+                if int(filename.split("_")[1][:-4])<=target_index and int(filename.split("_")[1][:-4])>=start_index:
+                    with open(src_path+filename) as source_file:
+                        target_file.write(source_file.read() + '\n')
+   
 
 # 判断文件中的语句是什么类型的语句
 # 1. 函数调用

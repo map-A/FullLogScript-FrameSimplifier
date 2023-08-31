@@ -13,12 +13,14 @@ def read_to_graph(filename,graph,nodelists,mapstack):
     line_pos = 0
     with open(filename, "r") as f:
         for line in f:
+            # if "pBuf_609" in line:
+            #     print(line,line_pos)
             if is_comment(line):
                 pass
             elif is_empty(line):
                 pass
             elif is_other(line):
-                res = parse_statement(line) # 里面又None
+                res = parse_statement(line) # 里面可能会有None
                 try:
                     # res[1]是变量名，res[3]是变量值
                     # res[3]这个变量值可能引用到了其他变量，所以需要进行解析
@@ -44,8 +46,9 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                     node = Node("NULL",[filename,line_pos])
                     nodelists.add_node(node)
             elif is_object_func_call(line):
+                
                 res = parse_object_func_call(line) # 解析对象调用
-                if res[1] in obj_create_func:
+                if res[1] in device_func:
                     # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们
                     ext_node_list = [] # 已经存在的节点
                     dontext_node_list = [] # 不存在的节点
@@ -63,8 +66,6 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                                 dontext_node_list.append(node)
                             else:
                                 ext_node_list.append(node)
-
-
                     # 将存在的与不存在的进行连接
                     for ex in ext_node_list:
                         for dont in dontext_node_list:
@@ -72,8 +73,9 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                             # 访问pBuf_14的时候，需要去访问pBuf_13，所以是pBuf_14->pBuf_13
                             graph.add_edge(dont,ex)
 
-                elif res[1] in obj_single_set_func:
+                elif res[1] in obj_set_func:
                     # TODO: 这类set只作用于一个变量
+                    pass
                     for i in res[2]:
                         p_v = parse_func_assignment(i) #parameters and values
                         if(is_macro(p_v[1])):
@@ -81,26 +83,33 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                         elif(is_decimal_or_hex(p_v[1])):
                             pass
                         elif(is_valid_variable(p_v[1])):
+                            pass
                             node = Node(p_v[1],[filename,line_pos])
-                            graph.add_vertex(node)
+                            # graph.add_vertex(node)
                             
-                elif res[1] in obj_multi_set_func:
+                elif res[1] in obj_set_func:
+                    pass
                     # TODO: 这类set作用于多个变量,需要将他们连接起来
-                    node_list = []
+                    # node_list = []
                     for i in res[2]:
+                    
                         p_v = parse_func_assignment(i) #parameters and values
                         if(is_macro(p_v[1])):
                             pass
                         elif(is_decimal_or_hex(p_v[1])):
                             pass
                         elif(is_valid_variable(p_v[1])):
+                            pass
                             node = Node(p_v[1],[filename,line_pos])
-                            node_list.append(node)
-                            graph.add_vertex(node)
-                    for i in range(len(node_list)-1):
-                        for j in range(i,len(node_list)-1):
-                            graph.add_edge(node_list[i],node_list[j])
-                            graph.add_edge(node_list[j],node_list[i])
+                            # graph.add_vertex(node)
+                            # node_list.append(node)
+                    
+
+                    # for i in range(0,len(node_list)):
+                    #     for j in range(i+1,len(node_list)):
+                    #         graph.add_edge(node_list[i],node_list[j])
+                    #         graph.add_edge(node_list[j],node_list[i])
+                    
 
                 elif res[1] in map_func:    
                     # TODO: map和unmap必须成对存在，他们的特点是第一个resource一样
@@ -152,9 +161,31 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                 elif(res[0] in must_add):
                     node = Node(res[1][0],[filename,line_pos])
                     graph.add_vertex(node)
-                else:
-                    node = Node("NULL_1",[filename,line_pos])
-                    nodelists.add_node(node)    
+                    nodelists.add_node(node)
+                elif(res[0] in other_func):
+                    pass
             line_pos = line_pos+1
 
 
+
+def read_to_draw_vector(filename,drawvector):
+    line_pos = 0
+    start_pos = [filename, line_pos]
+    end_pos = []
+    with open(filename, "r") as f:
+        for line in f:
+            if is_comment(line):
+                pass
+            elif is_empty(line):
+                pass
+            elif is_object_func_call(line):
+                if "pDev11_0->CreateRenderTargetView(pResource = pSwap_0_buf_0, pDesc = rtv"  in line :
+                    drawvector.add_pivote([filename, line_pos])
+                ## 判断是不是Draw()
+                res = parse_object_func_call(line)
+                if res[1] == "Draw":
+                    end_pos = [filename, line_pos]
+                    drawvector.add_draw(start_pos,end_pos)
+                    start_pos = [filename, line_pos+1]
+            
+            line_pos = line_pos+1
