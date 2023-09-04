@@ -18,3 +18,9 @@ src_path = r"vector\\" # 源sdx脚本所在路径
 tmp_path = "output\\" # 临时文件输出路径，删去了原有sdx文件中换行，使得更整洁
 target_path = "test-script\\" # 目标文件输出路径，最终的脚本文件
 ```
+
+# 打包成exe可执行文件
+
+``` 
+pyinstaller -F --console main.py
+```
