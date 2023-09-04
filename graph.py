@@ -9,7 +9,7 @@ device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometrySha
                 'CreateRasterizerState','CreateBuffer',
                 })
 
-IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetPrimitiveTopology','IASetInputLayout',})
+IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',})
 RS_stage_func = set({'RSSetState','RSSetViewports',})
 VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
 PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
@@ -40,7 +40,7 @@ map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 
 
 # 一定添加的，不管是不是资源
-must_add = set({'axdRelease','GetBuffer',})
+must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology',})
 
 other_func = set({'Flush','ClearState','Present',})
 
@@ -182,7 +182,7 @@ class DrawVector:
         for i in range(0,len(self.__drawVector__)):
             if self.__drawVector__[i][0][0] == self.__pivote__[0]:
                
-                if(self.__drawVector__[i][0][1] > self.__pivote__[1]):
-                    print(i) #1015 
+                if(self.__drawVector__[i][0][1] > self.__pivote__[1]): 
+                    index = i-1
                     return self.__drawVector__[index:]
         return []

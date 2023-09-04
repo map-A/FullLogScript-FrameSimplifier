@@ -54,7 +54,7 @@ def solve_line_dependency(filename,line_pos,line,graph,new_file_list):
         new_file_list.append([filename,line_pos])
 
 
-def solve_dependency(filename,graph,nodelists,new_file_list):
+def solve_dependency(graph,nodelists,filename,new_file_list):
     with open(filename, 'r') as f:
         line_pos = 0
         for line in f:
@@ -80,7 +80,7 @@ def solve_other(graph,drawvector,new_file_list,start_draw_index):
 
 
 
-def create_new_sdx_file(new_file_list,frame_index,new_filename):
+def create_new_sdx_file(new_file_list,save_start_index,new_filename):
     def custom_sort(item):
         filename = item[0]
         line_number = item[1]
@@ -112,30 +112,52 @@ def create_new_sdx_file(new_file_list,frame_index,new_filename):
             name_num = re.search(r'(\d+)\.sdx$', filename)
             if name_num:
                 name_num = int(name_num.group(1))
-            ## 不包括>frame_index的文件
-            if name_num==0 or name_num>=frame_index:
+            # 不包括在save_start_frame之后
+            if name_num>=save_start_index:
                 continue
             with open(filename, 'r') as original_file:
                 lines = original_file.readlines()
-            for line_num in line_numbers:
-                new_file.write(lines[line_num])
+                for line_num in line_numbers:
+                    new_file.write(lines[line_num])
 
         
-def simplify_one_frame(graph,nodelist,drawvector,src_folder_path,targe_frame_index,des_folder_path,start_draw_index=0):
-    filenames = os.listdir(src_folder_path)
-    source_files =[]
-    for filename in filenames:
-        if "_0" in filename:
-            source_files.append(filename)
-            
-        if "_"+str(targe_frame_index) in filename:
-            source_files.append(filename)
-    
-    shutil.copy(src_folder_path+source_files[0], des_folder_path+source_files[0])
-    new_file_list = [] # 保存文件行所在位置
+def simplify_frames(graph,nodelist,drawvector,src_path,target_path,save_start_index,save_end_index,start_draw_index):
+    """
+    从save_start_index开始保存，到save_end_index结束，
+    """
+    filenames = os.listdir(src_path)
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
+    else:
+        # 删除子文件夹和文件
+        for f in os.listdir(target_path):
+            full_path = os.path.join(target_path, f)
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+            elif os.path.isdir(full_path):
+                shutil.rmtree(full_path)
 
-    solve_dependency(src_folder_path+source_files[1],graph,nodelist,new_file_list)
+
+    # save_start_index,save_end_index, 保存为1-n的文件
+    
+    new_file_list = [] # 保存文件行所在位置
+    for filename in filenames:
+        name_num = re.search(r'(\d+)\.sdx$', filename)
+        if name_num:
+            name_num = int(name_num.group(1))
+        if name_num==0:
+            with open(src_path+filename, 'r') as f:
+                line_pos = 0
+                for line in f.readlines():
+                    new_file_list.append([src_path+filename,line_pos])            
+                    line_pos = line_pos+1
+            
+        if save_start_index<=name_num<=save_end_index:
+            new_filename = re.sub(r'(\d+)\.sdx$',str(name_num-save_start_index+1)+".sdx", filename)
+            print("produce "+ new_filename)
+            shutil.copy(src_path+filename, target_path+new_filename)
+            solve_dependency(graph,nodelist,src_path+filename,new_file_list)
+            
     solve_other(graph,drawvector,new_file_list,start_draw_index)
-    create_new_sdx_file(new_file_list,targe_frame_index,des_folder_path+source_files[1].replace(str(targe_frame_index),str(1)))
-    shutil.copy(src_folder_path+source_files[1], des_folder_path+source_files[1].replace(str(targe_frame_index),str(2)))
+    create_new_sdx_file(new_file_list,save_start_index,target_path+filenames[0])
       

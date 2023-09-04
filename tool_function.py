@@ -1,7 +1,7 @@
 import os
 import re
+import sys
 import shutil
-
 def read_dir(folder_path):
     """
     读取文件夹下所有符合条件的文件
@@ -9,8 +9,8 @@ def read_dir(folder_path):
     :return: 经过排序后的文件列表
     """
     if not os.path.exists(folder_path):
-        print('Folder does not exist')
-        return 
+        print(folder_path+' does not exist')
+        sys.exit()
     file_list = []
     
     # 获取文件夹下所有符合条件的文件
@@ -28,10 +28,18 @@ def trim_files(src_path,target_path):
     :return: None
     """
     if not os.path.exists(src_path):
-        print('Folder does not exist')
-        return
+        print(src_path+' does not exist')
+        sys.exit()
     if not os.path.exists(target_path):
         os.makedirs(target_path)
+    else:
+        # 删除子文件夹和文件
+        for f in os.listdir(target_path):
+            full_path = os.path.join(target_path, f)
+            if os.path.isfile(full_path):
+                os.remove(full_path)
+            elif os.path.isdir(full_path):
+                shutil.rmtree(full_path)
 
     file_list = read_dir(src_path)
     for filename in file_list:
