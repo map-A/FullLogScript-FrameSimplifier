@@ -42,6 +42,9 @@ map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 # 一定添加的，不管是不是资源
 must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology',})
 
+# IASetPrimitiveTopology 添加一次即可
+# get Buffer 一次
+
 other_func = set({'Flush','ClearState','Present',})
 
 
@@ -161,6 +164,7 @@ class DrawVector:
     def __init__(self):
         self.__drawVector__ = []
         self.__pivote__ = []
+
     def add_draw(self,start_pos,end_pos):
         self.__drawVector__.append([start_pos,end_pos])
 
@@ -170,19 +174,21 @@ class DrawVector:
     def print_drawvector(self):
         for i in self.__drawVector__:
             print(i)
-        # print(self.__drawVector__)
+
     def print_pivote(self):
         print(self.__pivote__)
     
-    def get_target_drawvector(self,index):
-        if index <0:
+    def get_target_drawvector(self,offset):
+        if offset <0:
             return []
         
         # 根据pivote获取drawvector,某一个draw在pivote的后面，某一个draw在pivote的前面
         for i in range(0,len(self.__drawVector__)):
             if self.__drawVector__[i][0][0] == self.__pivote__[0]:
                
-                if(self.__drawVector__[i][0][1] > self.__pivote__[1]): 
-                    index = i-1
-                    return self.__drawVector__[index:]
+                if(self.__drawVector__[i][0][1] > self.__pivote__[1]):
+                    if(offset==0):
+                        return self.__drawVector__[i-1:]
+                    else:
+                        return self.__drawVector__[i-1:i+offset]
         return []

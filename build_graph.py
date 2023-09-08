@@ -149,7 +149,8 @@ def read_to_graph(filename,graph,nodelists,mapstack):
 
                 elif res[1] in must_add:
                     # TODO：如果在其他的函数中，保证加入到图中
-                    node = Node("MUST",[filename,line_pos])
+                    # print("here",res[1]) get_bufer
+                    node = Node(res[1],[filename,line_pos])
                     nodelists.add_node(node)
                 elif res[1] in other_func:
                     pass
@@ -159,6 +160,7 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                     node = Node(parse_func_assignment(res[1][1])[1],[filename,line_pos])
                     graph.add_vertex(node)
                 elif(res[0] in must_add):
+                    # print("dasda",res[0],res[1][0])
                     node = Node(res[1][0],[filename,line_pos])
                     graph.add_vertex(node)
                     nodelists.add_node(node)
@@ -187,5 +189,4 @@ def read_to_draw_vector(filename,drawvector):
                     end_pos = [filename, line_pos]
                     drawvector.add_draw(start_pos,end_pos)
                     start_pos = [filename, line_pos+1]
-            
             line_pos = line_pos+1

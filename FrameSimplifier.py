@@ -11,7 +11,7 @@ if __name__ == "__main__":
     scene_begins_index= 1
     save_start_index = 1
     numbers_to_simple = 1
-    
+    offset = 0
 
 
     parser = argparse.ArgumentParser()
@@ -19,12 +19,15 @@ if __name__ == "__main__":
     parser.add_argument('-f','--first_scene_number',required=True,type=int,help="the first scene present number")
     parser.add_argument('-b', '--begin',required=True,type=int,help='Begining Simplified Script Sequence Number')
     parser.add_argument('-n', '--numbers_to_simple',required=False,type=int,default=1, help='number consecutive frames')
+    parser.add_argument('-m', '--magic_number',required=False,type=int,default=0, help='i donnot know how to set it, it better set over 17,when it set 0,it work without wrong,but simple script\
+                        will be larger, when is set over than 0,script will be small ,but it might work wrong')
     args = parser.parse_args()
     if(args):
         src_path = args.src_path
         scene_begins_index = args.first_scene_number
         save_start_index = args.begin
         numbers_to_simple = args.numbers_to_simple
+        offset = args.magic_number
     else:
     
 
@@ -36,13 +39,8 @@ if __name__ == "__main__":
         save_start_index = int(config['frame_index']['save_start_index'])
         numbers_to_simple = int(config['frame_index']['n'])
         src_path = config['path']['src_path']
-
-    # print(src_path)
-    # print(scene_begins_index)
-    # print(save_start_index)
-    # print(numbers_to_simple)
-
-    start_draw_index = 100
+        offset  = config['frame_index']['magic_number']
+    
     save_end_index = save_start_index+numbers_to_simple-1
 
 
@@ -63,7 +61,7 @@ if __name__ == "__main__":
         read_to_draw_vector(tmp_path+filename,drawvector)
 
     
-    simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,save_start_index,save_end_index,start_draw_index)
+    simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,save_start_index,save_end_index,offset)
     
     print("simplify success")
     input("Press enter to exit...")

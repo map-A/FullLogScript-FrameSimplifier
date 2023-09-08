@@ -65,17 +65,18 @@ def solve_dependency(graph,nodelists,filename,new_file_list):
         for node in nodelists.nodes[i]: 
             new_file_list.append(node.line_pos)
             graph.dfs(node.id,new_file_list)
+            if(i in must_add): # 保证添加一次
+                break;
 
 
-def solve_other(graph,drawvector,new_file_list,start_draw_index):
+def solve_other(graph,drawvector,new_file_list,offset):
     # 把drawvector中pivote后面的new_file_list中
-    for i in drawvector.get_target_drawvector(start_draw_index):
+    for i in drawvector.get_target_drawvector(offset):
         with open(i[0][0], 'r') as f:
             lines = f.readlines()
             for j in range(i[0][1],i[1][1]+1):
                 new_file_list.append([i[0][0],j])
                 # 解决于lines[j]有关的依赖
-                
                 solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
 
 
@@ -121,7 +122,7 @@ def create_new_sdx_file(new_file_list,save_start_index,new_filename):
                     new_file.write(lines[line_num])
 
         
-def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,save_start_index,save_end_index,start_draw_index):
+def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,save_start_index,save_end_index,offset):
     """
     从save_start_index开始保存，到save_end_index结束，
     """
@@ -158,17 +159,17 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
             shutil.copy(origin_path+filename, target_path+new_filename)
             solve_dependency(graph,nodelist,src_path+filename,new_file_list)
             
-    solve_other(graph,drawvector,new_file_list,start_draw_index)
+    solve_other(graph,drawvector,new_file_list,offset)
     new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
     create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
 
 
     # 删除子文件夹和文件
-    for f in os.listdir(src_path):
-        full_path = os.path.join(src_path, f)
-        if os.path.isfile(full_path):
-            os.remove(full_path)
-        elif os.path.isdir(full_path):
-            shutil.rmtree(full_path)
-    shutil.rmtree(src_path)
+    # for f in os.listdir(src_path):
+    #     full_path = os.path.join(src_path, f)
+    #     if os.path.isfile(full_path):
+    #         os.remove(full_path)
+    #     elif os.path.isdir(full_path):
+    #         shutil.rmtree(full_path)
+    # shutil.rmtree(src_path)
       
