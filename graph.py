@@ -179,7 +179,7 @@ class DrawVector:
         print(self.__pivote__)
     
     def get_target_drawvector(self,offset):
-        if offset <0:
+        if offset <-1:
             return []
         
         # 根据pivote获取drawvector,某一个draw在pivote的后面，某一个draw在pivote的前面
@@ -187,7 +187,7 @@ class DrawVector:
             if self.__drawVector__[i][0][0] == self.__pivote__[0]:
                
                 if(self.__drawVector__[i][0][1] > self.__pivote__[1]):
-                    if(offset==0):
+                    if(offset==-1):
                         return self.__drawVector__[i-1:]
                     else:
                         return self.__drawVector__[i-1:i+offset]

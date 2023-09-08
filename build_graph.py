@@ -20,7 +20,7 @@ def read_to_graph(filename,graph,nodelists,mapstack):
             elif is_empty(line):
                 pass
             elif is_other(line):
-                res = parse_statement(line) # 里面可能会有None
+                res = parse_statement(line) # 里面可能会有None,axCreateWindow(x = 0, y = 0, w = 1920, h = 1080, depth = 0, xvis = NULL, cfg = NULL)=win_1;
                 try:
                     # res[1]是变量名，res[3]是变量值
                     # res[3]这个变量值可能引用到了其他变量，所以需要进行解析

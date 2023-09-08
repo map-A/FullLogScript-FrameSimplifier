@@ -21,20 +21,23 @@ def solve_line_dependency(filename,line_pos,line,graph,new_file_list):
     elif is_other(line):
         new_file_list.append([filename,line_pos])
         res = parse_statement(line)
-        p_v = map(str.strip, res[3].split(","))
-        for i in p_v:
-            # 第一个是类型，第二个是变量名称，第三个是数组，第四个才是依赖
-            if( is_decimal_or_hex(i)):
-                pass
-            elif(is_macro(i)):
-                pass
-            elif(is_valid_variable(i)):
-                # 当是合法的变量时候，应该去以res[i]去深度遍历所有依赖的节点。
-                dependency_node = [] 
-                graph.dfs(i,dependency_node)
-                new_file_list.extend(dependency_node)
-            else:
-                pass
+        try:
+            p_v = map(str.strip, res[3].split(","))
+            for i in p_v:
+                # 第一个是类型，第二个是变量名称，第三个是数组，第四个才是依赖
+                if(is_decimal_or_hex(i)):
+                    pass
+                elif(is_macro(i)):
+                    pass
+                elif(is_valid_variable(i)):
+                    # 当是合法的变量时候，应该去以res[i]去深度遍历所有依赖的节点。
+                    dependency_node = [] 
+                    graph.dfs(i,dependency_node)
+                    new_file_list.extend(dependency_node)
+                else:
+                    pass
+        except:
+            new_file_list.append([filename,line_pos])
     elif is_object_func_call(line):
         
         new_file_list.append([filename,line_pos])

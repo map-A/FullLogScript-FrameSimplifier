@@ -19,8 +19,8 @@ if __name__ == "__main__":
     parser.add_argument('-f','--first_scene_number',required=True,type=int,help="the first scene present number")
     parser.add_argument('-b', '--begin',required=True,type=int,help='Begining Simplified Script Sequence Number')
     parser.add_argument('-n', '--numbers_to_simple',required=False,type=int,default=1, help='number consecutive frames')
-    parser.add_argument('-m', '--magic_number',required=False,type=int,default=0, help='i donnot know how to set it, it better set over 17,when it set 0,it work without wrong,but simple script\
-                        will be larger, when is set over than 0,script will be small ,but it might work wrong')
+    parser.add_argument('-m', '--magic_number',required=False,type=int,default=-1, help='i donnot know how to set it, it better set over 17,when it set -1,it work without wrong,but simple script\
+                        will be larger, when is set over than -1,script will be small ,but it might work wrong')
     args = parser.parse_args()
     if(args):
         src_path = args.src_path
