@@ -21,5 +21,5 @@ src_path = r"vector\\" # 源sdx脚本所在路径
 # 打包成exe可执行文件
 
 ``` 
-pyinstaller -F --console main.py
+pyinstaller -F --console FrameSimplifier.py
 ```
