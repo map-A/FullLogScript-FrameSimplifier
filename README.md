@@ -11,14 +11,13 @@
 
 main.py的参数说明：
 ```
-start_draw_index=968  # 假设所有的脚本有1088个Draw调用，那么从第968个开始，到最后一个，都是需要保留的，前面的都是不需要的，968是一个随机数字，需要根据实际情况修改
-first_frame_index=49 # 第一帧有实际图像输出文件序号
-
+scene_begins_index= 53 # 首次出现画面的文件序号，比如3DMark_CloudGate-orgSize-FixFPS0.5-GT1脚本中是在_53.sdx中首次出现画面
+save_start_index= 53 # 保存文件的起始序号，比如从3DMark_CloudGate-orgSize-FixFPS0.5-GT1/vector 的_53.sdx保存，
+n = 3 # 表示从53帧的连续3帧
 src_path = r"vector\\" # 源sdx脚本所在路径
-tmp_path = "output\\" # 临时文件输出路径，删去了原有sdx文件中换行，使得更整洁
-target_path = "test-script\\" # 目标文件输出路径，最终的脚本文件
-```
 
+```
+默认保存在`src_path` 的同级目录下。
 # 打包成exe可执行文件
 
 ``` 

@@ -121,7 +121,7 @@ def create_new_sdx_file(new_file_list,save_start_index,new_filename):
                     new_file.write(lines[line_num])
 
         
-def simplify_frames(graph,nodelist,drawvector,src_path,target_path,save_start_index,save_end_index,start_draw_index):
+def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,save_start_index,save_end_index,start_draw_index):
     """
     从save_start_index开始保存，到save_end_index结束，
     """
@@ -153,11 +153,22 @@ def simplify_frames(graph,nodelist,drawvector,src_path,target_path,save_start_in
                     line_pos = line_pos+1
             
         if save_start_index<=name_num<=save_end_index:
-            new_filename = re.sub(r'(\d+)\.sdx$',str(name_num-save_start_index+1)+".sdx", filename)
+            new_filename = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_'+str(name_num-save_start_index+1)+".sdx", filename)
             print("produce "+ new_filename)
-            shutil.copy(src_path+filename, target_path+new_filename)
+            shutil.copy(origin_path+filename, target_path+new_filename)
             solve_dependency(graph,nodelist,src_path+filename,new_file_list)
             
     solve_other(graph,drawvector,new_file_list,start_draw_index)
-    create_new_sdx_file(new_file_list,save_start_index,target_path+filenames[0])
+    new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
+    create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
+
+
+    # 删除子文件夹和文件
+    for f in os.listdir(src_path):
+        full_path = os.path.join(src_path, f)
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+        elif os.path.isdir(full_path):
+            shutil.rmtree(full_path)
+    shutil.rmtree(src_path)
       
