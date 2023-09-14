@@ -10,15 +10,17 @@ device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometrySha
                 })
 
 IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',})
-RS_stage_func = set({'RSSetState','RSSetViewports',})
 VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
-PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
+DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources',})
 GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources',})
+RS_stage_func = set({'RSSetState','RSSetViewports',})
+PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
 OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendState','OMSetRenderTargetsAndUnorderedAccessViews',
                 'ClearDepthStencilView','ClearRenderTargetView','CopyStructureCount', 
                 'DiscardView','DiscardResource','DrawInstancedIndirect',
                 })
 CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',})
+
 draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed'})
 
 
