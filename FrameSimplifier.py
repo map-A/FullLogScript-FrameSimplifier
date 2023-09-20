@@ -61,7 +61,7 @@ if __name__ == "__main__":
         read_to_draw_vector(tmp_path+filename,drawvector)
 
     
-    simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,save_start_index,save_end_index,offset)
+    simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,scene_begins_index,save_start_index,save_end_index,offset)
     
     print("simplify success")
     input("Press enter to exit...")

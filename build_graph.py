@@ -185,8 +185,9 @@ def read_to_draw_vector(filename,drawvector):
                     drawvector.add_pivote([filename, line_pos])
                 ## 判断是不是Draw()
                 res = parse_object_func_call(line)
-                if res[1] == "Draw":
+                if res[1] in draw_stage_func:
                     end_pos = [filename, line_pos]
-                    drawvector.add_draw(start_pos,end_pos)
+                    drawvector.add_draw(res[1],start_pos,end_pos)
                     start_pos = [filename, line_pos+1]
+                
             line_pos = line_pos+1

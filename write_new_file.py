@@ -72,9 +72,37 @@ def solve_dependency(graph,nodelists,filename,new_file_list):
                 break;
 
 
-def solve_other(graph,drawvector,new_file_list,offset):
+def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
     # 把drawvector中pivote后面的new_file_list中
-    for i in drawvector.get_target_drawvector(offset):
+    # 把dispatch 添加到new_file_list中
+    # 忽略所有的drawindex
+    for i in drawvector.get_draw_vector("Dispatch"):
+        with open(i[0][0], 'r') as f:
+            lines = f.readlines()
+            for j in range(i[0][1],i[1][1]+1):
+                new_file_list.append([i[0][0],j])
+                # 解决于lines[j]有关的依赖
+                solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+
+# 'Draw , 1
+# 'DrawIndexedInstanced',
+# 'DrawIndexed', 1
+# 'Dispatch', 1
+# 'DrawInstanced',
+# 'DrawInstancedIndirect'
+# 
+
+    # for i in drawvector.get_draw_vector("Draw"):
+    #         with open(i[0][0], 'r') as f:
+    #             lines = f.readlines()
+    #             for j in range(i[0][1],i[1][1]+1):
+    #                 new_file_list.append([i[0][0],j])
+    #                 # 解决于lines[j]有关的依赖
+    #                 solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+
+
+    # 保存部分的draw
+    for i in drawvector.get_target_drawvector(scene_begins_index,offset):
         with open(i[0][0], 'r') as f:
             lines = f.readlines()
             for j in range(i[0][1],i[1][1]+1):
@@ -125,7 +153,7 @@ def create_new_sdx_file(new_file_list,save_start_index,new_filename):
                     new_file.write(lines[line_num])
 
         
-def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,save_start_index,save_end_index,offset):
+def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,scene_begins_index,save_start_index,save_end_index,offset):
     """
     从save_start_index开始保存，到save_end_index结束，
     """
@@ -162,7 +190,7 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
             shutil.copy(origin_path+filename, target_path+new_filename)
             solve_dependency(graph,nodelist,src_path+filename,new_file_list)
             
-    solve_other(graph,drawvector,new_file_list,offset)
+    solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
     new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
     create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
 

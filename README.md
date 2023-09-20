@@ -11,14 +11,15 @@
 
 main.py的参数说明：
 ```
-scene_begins_index= 53 # 首次出现画面的文件序号，比如3DMark_CloudGate-orgSize-FixFPS0.5-GT1脚本中是在_53.sdx中首次出现画面
-save_start_index= 53 # 保存文件的起始序号，比如从3DMark_CloudGate-orgSize-FixFPS0.5-GT1/vector 的_53.sdx保存，
-n = 3 # 表示从53帧的连续3帧
-m = -1 # 一个不能确定的数字,-1 是绝对不会错
-src_path = r"vector\\" # 源sdx脚本所在路径
-
+python .\FrameSimplifier.py -s D:\test\script\3dmark-org\3DMark_FireStrike-orgSize-FixFPS0.5-GT1\vector\ -f 112 -b 113 -n 1 -m -1
 ```
-默认保存在`src_path` 的同级目录下。
+默认保存在`vector` 的同级目录frame下
+-f 第一个有画面的索引
+-b 想要dump的文件索引号
+-n 想要dump几个
+-m -1 保留所有Draw
+-m 0,保留从某个位置开始一直到这个位置结尾的draw，偏移含义
+
 # 打包成exe可执行文件
 
 ``` 

@@ -3,25 +3,27 @@
 # device 的函数, 一定要添加的，创建了资源
 device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometryShader','CreateQuery',
                'CreateUnorderedAccessView','CreateInputLayout','CreateDepthStencilView',
-               'CreateVertexShader','CreatePixelShader','CreateShaderResourceView',
+               'CreateVertexShader','CreatePixelShader','CreateShaderResourceView','CreateTexture3D',
                'CreateSamplerState','CreateDepthStencilState','CreateBlendState', 
                'CreateTexture2D','CreateComputeShader',
-                'CreateRasterizerState','CreateBuffer',
+                'CreateRasterizerState','CreateBuffer','CreateHullShader','CreateDomainShader',
                 })
 
 IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',})
 VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
 DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources',})
+HS_stage_func = set({'HSSetShader','HSSetConstantBuffers','HSSetShaderResources',})
+
 GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources',})
 RS_stage_func = set({'RSSetState','RSSetViewports',})
 PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
 OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendState','OMSetRenderTargetsAndUnorderedAccessViews',
                 'ClearDepthStencilView','ClearRenderTargetView','CopyStructureCount', 
-                'DiscardView','DiscardResource','DrawInstancedIndirect',
+                'DiscardView','DiscardResource',
                 })
 CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',})
 
-draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed'})
+draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed','Dispatch','DrawInstanced','DrawInstancedIndirect',})
 
 
 obj_set_func =set({'ClearDepthStencilView','PSSetShader',
@@ -42,7 +44,7 @@ map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 
 
 # 一定添加的，不管是不是资源
-must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology',})
+must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','CopySubresourceRegion'})
 
 # IASetPrimitiveTopology 添加一次即可
 # get Buffer 一次
@@ -164,14 +166,21 @@ class MapStack:
 
 class DrawVector:
     def __init__(self):
-        self.__drawVector__ = []
+        self.__drawVector__ = {}        
         self.__pivote__ = []
 
-    def add_draw(self,start_pos,end_pos):
-        self.__drawVector__.append([start_pos,end_pos])
+    def add_draw(self,draw_type,start_pos,end_pos):
+        if draw_type not in self.__drawVector__:
+            self.__drawVector__[draw_type] = []
+        self.__drawVector__[draw_type].append([start_pos,end_pos])
 
     def add_pivote(self,pos):
         self.__pivote__ = pos
+
+    def get_draw_vector(self,draw_type):
+        if draw_type not in self.__drawVector__:
+            return []
+        return self.__drawVector__[draw_type]
     
     def print_drawvector(self):
         for i in self.__drawVector__:
@@ -180,17 +189,29 @@ class DrawVector:
     def print_pivote(self):
         print(self.__pivote__)
     
-    def get_target_drawvector(self,offset):
+    
+    def get_target_drawvector(self,scene_begins_index,offset):
+        """
+        offset: 小于-1 不获取任何draw
+        offset: -1 表示获取从pivote开始到结束的所有draw
+        offset: >0 表示获取pivote到 pivote+i 的所有draw
+        """
         if offset <-1:
             return []
         
         # 根据pivote获取drawvector,某一个draw在pivote的后面，某一个draw在pivote的前面
-        for i in range(0,len(self.__drawVector__)):
-            if self.__drawVector__[i][0][0] == self.__pivote__[0]:
-               
-                if(self.__drawVector__[i][0][1] > self.__pivote__[1]):
+        start_pos = 0
+        for i in range(0,len(self.__drawVector__['Draw'])):
+            if self.__drawVector__['Draw'][i][0][0] == self.__pivote__[0]: # 在同一个文件中
+                if(self.__drawVector__['Draw'][i][0][1] > self.__pivote__[1]):
                     if(offset==-1):
-                        return self.__drawVector__[i-1:]
+                        start_pos = i-1
+                        break
+                        # return self.__drawVector__['Draw'][i-1:]
                     else:
-                        return self.__drawVector__[i-1:i+offset]
+                        return self.__drawVector__['Draw'][i-1:i+offset]
+        for i in range(0,len(self.__drawVector__['Draw'])):
+            if(str(scene_begins_index)+".sdx" in self.__drawVector__['Draw'][i][0][0]):
+                end_pos = i-1
+                return self.__drawVector__['Draw'][start_pos:end_pos]
         return []
