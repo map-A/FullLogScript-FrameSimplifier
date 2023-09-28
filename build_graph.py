@@ -1,6 +1,6 @@
 from tool_function import *
 from graph import *
-
+import re
 # 使用解析好的资源构建链表或者图
 # 首先是设计图的节点类的结构，然后是边的关系，最后是图的结构
 # 读取一个文件，解析每一行，判断每一行语句的种类，然后进行处理
@@ -160,12 +160,13 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                     node = Node(parse_func_assignment(res[1][1])[1],[filename,line_pos])
                     graph.add_vertex(node)
                 elif(res[0] in must_add):
-                    # print("dasda",res[0],res[1][0])
                     node = Node(res[1][0],[filename,line_pos])
                     graph.add_vertex(node)
                     nodelists.add_node(node)
                 elif(res[0] in other_func):
                     pass
+
+
             line_pos = line_pos+1
 
 
@@ -191,3 +192,51 @@ def read_to_draw_vector(filename,drawvector):
                     start_pos = [filename, line_pos+1]
                 
             line_pos = line_pos+1
+
+def generate_inject_file(filename,inject_file):
+    with open(filename, "r") as f, open(inject_file, "a") as inj:
+        index = 0
+        start_pos = [filename, index]
+        end_pos = []
+        for line in f:
+            if is_comment(line):
+                pass
+            elif is_empty(line):
+                pass
+            elif is_object_func_call(line):
+                res = parse_object_func_call(line)
+                if res[1] in copy_func:
+                    # 根据copy的资源，判断是否需要注入
+                    file_pos = 'F'+ re.search(r'(\d+)\.sdx$', filename).group(1)
+                    line_pose = 'L'+ str(index)
+                    function= 'axDumpResource('+res[0] + ', IID_ID3D11Resource, DXGI_FORMAT_UNKNOW'
+                    p_v = parse_func_assignment(res[2][0]) #parameters and values
+                    if(is_macro(p_v[1])):
+                        pass
+                    elif(is_decimal_or_hex(p_v[1])):
+                        pass
+                    elif(is_valid_variable(p_v[1])):
+                        resource = p_v[1]
+                    argumets = resource
+                    # TODO:需要判断注入那种类型的资源，dds还是bin
+                    save_type = ".bin"
+                    if(resource[0:3] != "pBu"):
+                        save_type = ".dds"
+                    new_resoure = "\"" + resource+ "_"+ file_pos + "_"+ line_pose + save_type +"\")\n"
+                    inj.write(file_pos+', ' + line_pose+', ' + function+', ' + argumets+', 0, ' + new_resoure)
+                elif res[1] in draw_stage_func:
+                    end_pos = [filename, index]
+                    # start pos 和end pos之间分析
+                    # 如果是Draw，那么就注入
+                    lines = f.readlines()[start_pos[1],end_pos[1]]
+                    # 分析这段的lines，看看有没有注入的必要
+                    for line in lines:
+                        
+
+                    start_pos = [filename, index+1]
+
+            # TODO: 还有一类dispatch需要inject的
+            # 从何处开始，从何处结束，如果两个dispacth的树子节点相同，可以合并他们，dump出他们的buffer
+            # 每一个dispatch dump下来，然后再合并
+            index = index+1
+    

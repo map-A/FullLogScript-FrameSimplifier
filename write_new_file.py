@@ -76,13 +76,34 @@ def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
     # 把drawvector中pivote后面的new_file_list中
     # 把dispatch 添加到new_file_list中
     # 忽略所有的drawindex
-    for i in drawvector.get_draw_vector("Dispatch"):
-        with open(i[0][0], 'r') as f:
+
+    start = drawvector.get_draw_vector("Dispatch")
+    tmp = start[0]
+    f = open(tmp[0][0],'r')
+    lines = f.readlines()
+    for i in start:
+        if(i[0][0]!= tmp[0][0]):
+            tmp = i
+            f.close()
+            f = open(tmp[0][0],'r')
             lines = f.readlines()
-            for j in range(i[0][1],i[1][1]+1):
-                new_file_list.append([i[0][0],j])
-                # 解决于lines[j]有关的依赖
-                solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+        
+        for j in range(i[0][1],i[1][1]+1):
+            if("CSSetShader" in lines[j]):
+                # print(lines[j])
+                for k in range(i[0][1],i[1][1]+1):
+                    new_file_list.append([i[0][0],k])
+                    # 解决于lines[j]有关的依赖
+                    solve_line_dependency(i[0][0],k,lines[k],graph,new_file_list)
+
+
+    # for i in drawvector.get_draw_vector("Dispatch"):
+    #     with open(i[0][0], 'r') as f:
+    #         lines = f.readlines()
+    #         for j in range(i[0][1],i[1][1]+1):
+    #             new_file_list.append([i[0][0],j])
+    #             # 解决于lines[j]有关的依赖
+    #             solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
 
 # 'Draw , 1
 # 'DrawIndexedInstanced',
@@ -90,15 +111,6 @@ def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
 # 'Dispatch', 1
 # 'DrawInstanced',
 # 'DrawInstancedIndirect'
-# 
-
-    # for i in drawvector.get_draw_vector("Draw"):
-    #         with open(i[0][0], 'r') as f:
-    #             lines = f.readlines()
-    #             for j in range(i[0][1],i[1][1]+1):
-    #                 new_file_list.append([i[0][0],j])
-    #                 # 解决于lines[j]有关的依赖
-    #                 solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
 
 
     # 保存部分的draw

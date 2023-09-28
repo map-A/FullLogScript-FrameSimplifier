@@ -7,13 +7,19 @@ device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometrySha
                'CreateSamplerState','CreateDepthStencilState','CreateBlendState', 
                'CreateTexture2D','CreateComputeShader',
                 'CreateRasterizerState','CreateBuffer','CreateHullShader','CreateDomainShader',
-                })
+                'CreateDeferredContext','CreateGeometryShaderWithStreamOutput','CreatePredicate',
+                'CreateTexture1D','CreateBlendState1','CreateDeferredContext1',
+                'CreateDeviceContextState','CreateQuery1','CreateRenderTargetView1',
+                'CreateShaderResourceView1','CreateTexture2D1','CreateTexture3D1',
+                'CreateUnorderedAccessView1','CreateFence',})
+
+
 
 IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',})
 VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
-DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources',})
 HS_stage_func = set({'HSSetShader','HSSetConstantBuffers','HSSetShaderResources',})
-
+TS_stage_func = set({'TSSetShader','TSSetConstantBuffers','TSSetShaderResources',})
+DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources',})
 GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources',})
 RS_stage_func = set({'RSSetState','RSSetViewports',})
 PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
@@ -23,7 +29,11 @@ OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendSt
                 })
 CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',})
 
-draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed','Dispatch','DrawInstanced','DrawInstancedIndirect',})
+draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed',
+                       'DrawAuto',
+                       'Dispatch','DispatchIndirect',
+                       'DrawIndexedInstancedIndirect',
+                       'DrawInstanced','DrawInstancedIndirect',})
 
 
 obj_set_func =set({'ClearDepthStencilView','PSSetShader',
@@ -36,18 +46,21 @@ obj_set_func =set({'ClearDepthStencilView','PSSetShader',
                           'VSSetShader','VSSetShaderResources',
                           'DiscardResource','DrawInstancedIndirect','DiscardView','OMSetRenderTargets','OMSetBlendState',
                           'IASetVertexBuffers','OMSetRenderTargetsAndUnorderedAccessViews',
-                          'ClearRenderTargetView','CopyStructureCount', 'CopyResource',
-                          })
+                          'ClearRenderTargetView','GenerateMips',})
 
 
 map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 
 
 # 一定添加的，不管是不是资源
-must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','CopySubresourceRegion'})
+must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','GenerateMips','D3DCompileFromFile'})
+# IASetPrimitiveTopology 保证在一个Draw添加一次即可# get Buffer 一次
 
-# IASetPrimitiveTopology 添加一次即可
-# get Buffer 一次
+# 为了生成一个inject文件
+copy_func = set({'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',})
+
+
+
 
 other_func = set({'Flush','ClearState','Present',})
 

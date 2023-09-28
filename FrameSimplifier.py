@@ -56,9 +56,13 @@ if __name__ == "__main__":
 
     
     file_list = read_dir(tmp_path)
+    inject_file = file_list[0].replace('_0.sdx','_Trim.inject')
     for filename in file_list:
+        generate_inject_file(tmp_path+filename,src_path+inject_file)
         read_to_graph(tmp_path+filename,graph,nodelist,mapstack)        
-        read_to_draw_vector(tmp_path+filename,drawvector)
+        read_to_draw_vector(tmp_path+filename,drawvector,src_path+inject_file)
+        
+
 
     
     simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,scene_begins_index,save_start_index,save_end_index,offset)
