@@ -143,6 +143,22 @@ class Graph:
                         res.append(nxt.line_pos)
                         if nxt.id not in visited:
                             stack.append(nxt.id)
+    
+    def get_leaf(self,nodeid,res):
+        # 获取nodeid的叶子节点
+        stack = [nodeid]
+        visited = set()
+        while stack:
+            cur = stack.pop()
+            if cur not in visited:
+                visited.add(cur)
+                neibo = self.get_neighbors(cur)
+                if neibo:
+                    for nxt in neibo:
+                        if nxt.id not in visited:
+                            stack.append(nxt.id)
+                else:
+                    res.append(cur)
 
 class NodeLists():
     def __init__(self):

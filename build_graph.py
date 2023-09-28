@@ -13,8 +13,6 @@ def read_to_graph(filename,graph,nodelists,mapstack):
     line_pos = 0
     with open(filename, "r") as f:
         for line in f:
-            # if "pBuf_609" in line:
-            #     print(line,line_pos)
             if is_comment(line):
                 pass
             elif is_empty(line):
@@ -72,45 +70,7 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                             # 比如用pBuf_13创建了pBuf0_14，最后文件中pBuf_14依赖于pBuf_13，
                             # 访问pBuf_14的时候，需要去访问pBuf_13，所以是pBuf_14->pBuf_13
                             graph.add_edge(dont,ex)
-
-                elif res[1] in obj_set_func:
-                    # TODO: 这类set只作用于一个变量
-                    pass
-                    for i in res[2]:
-                        p_v = parse_func_assignment(i) #parameters and values
-                        if(is_macro(p_v[1])):
-                            pass
-                        elif(is_decimal_or_hex(p_v[1])):
-                            pass
-                        elif(is_valid_variable(p_v[1])):
-                            pass
-                            node = Node(p_v[1],[filename,line_pos])
-                            # graph.add_vertex(node)
-                            
-                elif res[1] in obj_set_func:
-                    pass
-                    # TODO: 这类set作用于多个变量,需要将他们连接起来
-                    # node_list = []
-                    for i in res[2]:
                     
-                        p_v = parse_func_assignment(i) #parameters and values
-                        if(is_macro(p_v[1])):
-                            pass
-                        elif(is_decimal_or_hex(p_v[1])):
-                            pass
-                        elif(is_valid_variable(p_v[1])):
-                            pass
-                            node = Node(p_v[1],[filename,line_pos])
-                            # graph.add_vertex(node)
-                            # node_list.append(node)
-                    
-
-                    # for i in range(0,len(node_list)):
-                    #     for j in range(i+1,len(node_list)):
-                    #         graph.add_edge(node_list[i],node_list[j])
-                    #         graph.add_edge(node_list[j],node_list[i])
-                    
-
                 elif res[1] in map_func:    
                     # TODO: map和unmap必须成对存在，他们的特点是第一个resource一样
                     # 他们最后都需要连接到创建的资源上
@@ -152,6 +112,7 @@ def read_to_graph(filename,graph,nodelists,mapstack):
                     # print("here",res[1]) get_bufer
                     node = Node(res[1],[filename,line_pos])
                     nodelists.add_node(node)
+
                 elif res[1] in other_func:
                     pass
             elif is_func_call(line):
@@ -193,7 +154,7 @@ def read_to_draw_vector(filename,drawvector):
                 
             line_pos = line_pos+1
 
-def generate_inject_file(filename,inject_file):
+def generate_inject_file(filename,inject_file,graph):
     with open(filename, "r") as f, open(inject_file, "a") as inj:
         index = 0
         start_pos = [filename, index]
@@ -224,14 +185,82 @@ def generate_inject_file(filename,inject_file):
                         save_type = ".dds"
                     new_resoure = "\"" + resource+ "_"+ file_pos + "_"+ line_pose + save_type +"\")\n"
                     inj.write(file_pos+', ' + line_pose+', ' + function+', ' + argumets+', 0, ' + new_resoure)
+
                 elif res[1] in draw_stage_func:
                     end_pos = [filename, index]
                     # start pos 和end pos之间分析
                     # 如果是Draw，那么就注入
                     lines = f.readlines()[start_pos[1],end_pos[1]]
                     # 分析这段的lines，看看有没有注入的必要
-                    for line in lines:
-                        
+                    # 收集这一段引用的资源，然后去graph中寻找
+                    ref_list = []
+                    for l in lines:
+                        if is_comment(l):
+                            pass
+                        elif is_empty(l):
+                            pass
+                        elif is_other(l):
+                            ret = parse_statement(l)
+                             # 里面可能会有None,axCreateWindow(x = 0, y = 0, w = 1920, h = 1080, depth = 0, xvis = NULL, cfg = NULL)=win_1;
+                            try:
+                                # res[1]是变量名，res[3]是变量值
+                                # res[3]这个变量值可能引用到了其他变量，所以需要进行解析
+                                # res[3]引用的都是(a,b,c)这种，里面没有括号，有括号的没有引用
+                                # 姑且认为包括括号的都没有引用其他变量   
+                                if "=" in res[3]:
+                                    #axCreateWindow(x = 0, y = 0, w = 1920, h = 1080, depth = 0, xvis = NULL, cfg = NULL)=win_1;这种
+                                    pass
+                                else:
+                                    val_list = res[3].split(",")
+                                    val_list = [val.strip() for val in val_list]
+                                    for val in val_list:
+                                        if(is_macro(val)): # 去除空格
+                                            pass
+                                        elif(is_decimal_or_hex(val)):
+                                            pass
+                                        elif(is_valid_variable(val)):
+                                           ref_list.append(val)                               
+                            except:
+                                pass
+                        elif is_object_func_call(l):
+                            ret = parse_object_func_call(l) # 解析对象调用
+                            if res[1] in device_func:
+                                # 如果是Create类的话，不用管，后面解决依赖会处理
+                                pass
+                            
+                            elif res[1] in obj_set_func:
+                                pass
+                                # TODO: 这类set作用于多个变量,需要将他们连接起来
+                                # node_list = []
+                                for i in res[2]:
+                                    p_v = parse_func_assignment(i) #parameters and values
+                                    if(is_macro(p_v[1])):
+                                        pass
+                                    elif(is_decimal_or_hex(p_v[1])):
+                                        pass
+                                    elif(is_valid_variable(p_v[1])):
+                                        graph.get_leaf(p_v[1],ref_list)
+                                                
+
+                            elif res[1] in map_func:
+                                #map 和之前的device create一样
+                                pass
+                                
+
+                            elif res[1] in must_add:
+                                pass
+                            elif res[1] in other_func:
+                                pass
+                        elif is_func_call(l):
+                            pass
+                    
+
+
+
+                    # 现在有了一个dispatch所有引用的buffer，是否应该写一个dump函数，然后注入
+                    # 处理 ref_list，去重，然后去graph中寻找
+                    ref_list = list(set(ref_list))
+                    
 
                     start_pos = [filename, index+1]
 
