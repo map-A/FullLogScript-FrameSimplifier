@@ -11,16 +11,20 @@ device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometrySha
                 'CreateTexture1D','CreateBlendState1','CreateDeferredContext1',
                 'CreateDeviceContextState','CreateQuery1','CreateRenderTargetView1',
                 'CreateShaderResourceView1','CreateTexture2D1','CreateTexture3D1',
-                'CreateUnorderedAccessView1','CreateFence',})
+                'CreateUnorderedAccessView1','CreateFence',"CreateRasterizerState1",
+                'ClearState', 'ClearDepthStencilView','ClearRenderTargetView','ClearUnorderedAccessViewFloat',
+                "CreateDXGIFactory1","D3D11CreateDevice","CreateSwapChain",
+                'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',
+                })
 
 
 
 IA_stage_func = set({'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',})
 VS_stage_func = set({'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',})
-HS_stage_func = set({'HSSetShader','HSSetConstantBuffers','HSSetShaderResources',})
+HS_stage_func = set({'HSSetShader','HSSetConstantBuffers','HSSetShaderResources','HSSetSamplers'})
 TS_stage_func = set({'TSSetShader','TSSetConstantBuffers','TSSetShaderResources',})
-DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources',})
-GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources',})
+DS_stage_func = set({'DSSetShader','DSSetConstantBuffers','DSSetShaderResources','DSSetSamplers',})
+GS_stage_func = set({'GSSetShader','GSSetConstantBuffers','GSSetShaderResources','GSSetSamplers',})
 RS_stage_func = set({'RSSetState','RSSetViewports',})
 PS_stage_func = set({'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',})
 OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendState','OMSetRenderTargetsAndUnorderedAccessViews',
@@ -29,11 +33,12 @@ OM_stage_func = set({'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendSt
                 })
 CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',})
 
+#draw_stage_func = set({"Dispatch"})
 draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed',
-                       'DrawAuto',
-                       'Dispatch','DispatchIndirect',
-                       'DrawIndexedInstancedIndirect',
-                       'DrawInstanced','DrawInstancedIndirect',})
+                        'DrawAuto',
+                        'Dispatch','DispatchIndirect',
+                        'DrawIndexedInstancedIndirect',
+                        'DrawInstanced','DrawInstancedIndirect',})
 
 
 obj_set_func =set({'ClearDepthStencilView','PSSetShader',
@@ -46,23 +51,26 @@ obj_set_func =set({'ClearDepthStencilView','PSSetShader',
                           'VSSetShader','VSSetShaderResources',
                           'DiscardResource','DrawInstancedIndirect','DiscardView','OMSetRenderTargets','OMSetBlendState',
                           'IASetVertexBuffers','OMSetRenderTargetsAndUnorderedAccessViews',
-                          'ClearRenderTargetView','GenerateMips',})
+                          'ClearRenderTargetView','GenerateMips','ClearUnorderedAccessViewFloat'})
 
 
 map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
 
 
 # 一定添加的，不管是不是资源
-must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','GenerateMips','D3DCompileFromFile'})
+must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','GenerateMips','D3DCompileFromFile','CreateDXGIFactory1'
+                'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',
+                "CreateDXGIFactory1","D3D11CreateDevice","CreateSwapChain",})
 # IASetPrimitiveTopology 保证在一个Draw添加一次即可# get Buffer 一次
 
 # 为了生成一个inject文件
-copy_func = set({'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',})
+copy_func = set()
+# copy_func = set({'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',})
 
 
 
 
-other_func = set({'Flush','ClearState','Present',})
+other_func = set({'Flush','ClearState','Present','CreateDXGIFactory1'})
 
 
 class Node:
@@ -146,10 +154,12 @@ class Graph:
     
     def get_leaf(self,nodeid,res):
         # 获取nodeid的叶子节点
+        temp = []
         stack = [nodeid]
         visited = set()
         while stack:
             cur = stack.pop()
+            temp.append(cur)
             if cur not in visited:
                 visited.add(cur)
                 neibo = self.get_neighbors(cur)
@@ -157,9 +167,11 @@ class Graph:
                     for nxt in neibo:
                         if nxt.id not in visited:
                             stack.append(nxt.id)
-                else:
-                    res.append(cur)
-
+        for i in temp:
+            if i[0:4]=="pBuf" or i[0:4]=="pTex" or i == "pSwap_0_buf_0": 
+            #or i[0:3]=="pCS" or i[0:3]=="pDS" or i[0:3]=="pGS" or i[0:3]=="pHS" or i[0:3]=="pPS" or i[0:3]=="pVS" or i[0:3]=="pIn":
+                res.append(i)    
+        
 class NodeLists():
     def __init__(self):
         self.nodes = {}

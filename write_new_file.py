@@ -77,24 +77,24 @@ def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
     # 把dispatch 添加到new_file_list中
     # 忽略所有的drawindex
 
-    start = drawvector.get_draw_vector("Dispatch")
-    tmp = start[0]
-    f = open(tmp[0][0],'r')
-    lines = f.readlines()
-    for i in start:
-        if(i[0][0]!= tmp[0][0]):
-            tmp = i
-            f.close()
-            f = open(tmp[0][0],'r')
-            lines = f.readlines()
+    # start = drawvector.get_draw_vector("Dispatch")
+    # tmp = start[0]
+    # f = open(tmp[0][0],'r')
+    # lines = f.readlines()
+    # for i in start:
+    #     if(i[0][0]!= tmp[0][0]):
+    #         tmp = i
+    #         f.close()
+    #         f = open(tmp[0][0],'r')
+    #         lines = f.readlines()
         
-        for j in range(i[0][1],i[1][1]+1):
-            if("CSSetShader" in lines[j]):
-                # print(lines[j])
-                for k in range(i[0][1],i[1][1]+1):
-                    new_file_list.append([i[0][0],k])
-                    # 解决于lines[j]有关的依赖
-                    solve_line_dependency(i[0][0],k,lines[k],graph,new_file_list)
+    #     for j in range(i[0][1],i[1][1]+1):
+    #         if("CSSetShader" in lines[j]):
+    #             # print(lines[j])
+    #             for k in range(i[0][1],i[1][1]+1):
+    #                 new_file_list.append([i[0][0],k])
+    #                 # 解决于lines[j]有关的依赖
+    #                 solve_line_dependency(i[0][0],k,lines[k],graph,new_file_list)
 
 
     # for i in drawvector.get_draw_vector("Dispatch"):
@@ -105,12 +105,6 @@ def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
     #             # 解决于lines[j]有关的依赖
     #             solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
 
-# 'Draw , 1
-# 'DrawIndexedInstanced',
-# 'DrawIndexed', 1
-# 'Dispatch', 1
-# 'DrawInstanced',
-# 'DrawInstancedIndirect'
 
 
     # 保存部分的draw
@@ -193,16 +187,19 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
             with open(src_path+filename, 'r') as f:
                 line_pos = 0
                 for line in f.readlines():
-                    new_file_list.append([src_path+filename,line_pos])            
+                    if line_pos<4 or "swapDesc" in line or "Present" in line: #前4行必须保留
+                        new_file_list.append([src_path+filename,line_pos])
                     line_pos = line_pos+1
-            
+
+          
         if save_start_index<=name_num<=save_end_index:
             new_filename = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_'+str(name_num-save_start_index+1)+".sdx", filename)
             print("produce "+ new_filename)
             shutil.copy(origin_path+filename, target_path+new_filename)
-            solve_dependency(graph,nodelist,src_path+filename,new_file_list)
-            
-    solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
+            solve_dependency(graph,nodelist,src_path+filename,new_file_list) 
+
+    # 保存部分的draw和Dispatch     
+    #solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
     new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
     create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
 
@@ -216,3 +213,45 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
     #         shutil.rmtree(full_path)
     # shutil.rmtree(src_path)
       
+
+
+def upload_files(tmp_path,target_path,new_filename_0,inject_file):
+    # 将inject文件中的内容添加到新的sdx文件中
+    path = "D:\\work\\3DMark_CloudGate-orgSize-FixFPS0.5-GT1\\ReplayDump\HW\\"
+    files = os.listdir(path)
+    with open(tmp_path+inject_file, 'r') as inj, open(target_path+new_filename_0, 'a') as new_file:
+        lines = inj.readlines()
+        for line in lines:
+            # 拼凑 inject文件中的每一行
+            fields = line.strip().split(',')
+            # 按照逗号划分，fileds[5]是上传的对象名，fields[7].split(')')[0]+是上传的文件名（包含引号），最后0是上传的第几个
+            # axdUpdateSubresourcesFromFile(pCtx_0, IID_ID3D11Resource, pTex2D_155, 0, 1, "pTex2D_155_f6_l414.dds", 0);
+
+            use_obj = fields[2].strip().split('(')[1]
+            obj_name = fields[5]
+            obj_name_resource = fields[7].split(')')[0]
+            new_obj_name_resources = []
+            index = '0'
+            pattern = r'\"(.+)\.(.+)\"'
+            
+            match = re.search(pattern, obj_name_resource)
+            if match:
+                for file in files:
+                    if match.group(1) in file:
+                        new_obj_name_resources.append(file)
+            if len(new_obj_name_resources)>1:
+                def sort_key(f):
+                    m = re.search(r'(.+)_s(\d+)\.(.+)', f)
+                    if m: 
+                        return (int)(m.group(2))
+                new_obj_name_resources.sort(key=sort_key)
+
+            for i in new_obj_name_resources:
+                m = re.search(r'(.+)_s(\d+)\.(.+)', i)
+                if m is not None: 
+                    # index= '0'
+                    index = m.group(2)
+                    # axdUpdateSubresourcesFromFile(pCtx_0, IID_ID3D11Resource, pTex2D_105, 3, 1, "pTex2D_105_F0_L47346_s3.dds", 0);
+                l ="axdUpdateSubresourcesFromFile(" + use_obj+','+fields[3]+','+obj_name+', '+index+', 1, "' + i +'", 0);\n'
+            # print(l)
+                new_file.write(l)

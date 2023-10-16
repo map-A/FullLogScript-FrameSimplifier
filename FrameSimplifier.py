@@ -5,6 +5,7 @@ from write_new_file import *
 import configparser
 import sys
 import os
+import subprocess
 import argparse
 if __name__ == "__main__":
     src_path = ""
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     save_end_index = save_start_index+numbers_to_simple-1
 
 
-    tmp_path = os.path.dirname(os.path.dirname(src_path)) +r"\temp\\" # 新的src path，原有的变成origin_path
+    tmp_path = os.path.dirname(os.path.dirname(src_path)) +r"\\temp\\" # 新的src path，原有的变成origin_path
     target_path = os.path.dirname(os.path.dirname(src_path)) +r"\frames\\"
     
     trim_files(src_path,tmp_path)
@@ -59,14 +60,30 @@ if __name__ == "__main__":
     inject_file = file_list[0].replace('_0.sdx','_Trim.inject')
     for filename in file_list:
         read_to_graph(tmp_path+filename,graph,nodelist,mapstack)        
-        read_to_draw_vector(tmp_path+filename,drawvector,src_path+inject_file)
+        read_to_draw_vector(tmp_path+filename,drawvector)
+        """
+        在最后需要trim的帧之前的所有改动dump到inject文件中
+        inject文件中的语句最后需要添加到trim的帧之前
+        """
         generate_inject_file(tmp_path+filename,src_path+inject_file,graph)
-
-
-
-    
+   
     simplify_frames(graph,nodelist,drawvector,src_path,tmp_path,target_path,scene_begins_index,save_start_index,save_end_index,offset)
     
+    generate_final_inject_file(src_path+inject_file,tmp_path+inject_file,save_start_index)
+
+
+    # #./qReplay/qReplay.exe -s D:/work/3DMark_SkyDiver-orgSize-FixFPS0.5-gt1/temp/3DMarkSkyDiver_0.sdx --inject 3DMarkSkyDiver_Trim.inject
+    cmd = r".\\qReplay\\qReplay.exe -s "+ r"D:\\work\\3DMark_CloudGate-orgSize-FixFPS0.5-GT1\\temp\\"+file_list[0]+" --inject "+ inject_file+ " --hide"
+    print(cmd)
+    p1 = subprocess.Popen(cmd, shell=True)
+    p1.wait()
+
+    new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", file_list[0])
+    upload_files(tmp_path,target_path,new_filename_0,inject_file)
+    
+    
+    
+
     print("simplify success")
     input("Press enter to exit...")
     sys.exit()
