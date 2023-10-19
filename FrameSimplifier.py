@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
 
     # #./qReplay/qReplay.exe -s D:/work/3DMark_SkyDiver-orgSize-FixFPS0.5-gt1/temp/3DMarkSkyDiver_0.sdx --inject 3DMarkSkyDiver_Trim.inject
-    cmd = r".\\qReplay\\qReplay.exe -s "+ r"D:\\work\\3DMark_CloudGate-orgSize-FixFPS0.5-GT1\\temp\\"+file_list[0]+" --inject "+ inject_file+ " --hide"
+    cmd = r".\\qReplay\\qReplay.exe -s "+ r"D:\\work\\3DMark_FireStrike-Extreme-orgSize-FixFPS0.5-GT2\\temp\\"+file_list[0]+" --inject "+ inject_file+ " --hide"
     print(cmd)
     p1 = subprocess.Popen(cmd, shell=True)
     p1.wait()

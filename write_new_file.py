@@ -77,44 +77,24 @@ def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
     # 把dispatch 添加到new_file_list中
     # 忽略所有的drawindex
 
-    # start = drawvector.get_draw_vector("Dispatch")
-    # tmp = start[0]
-    # f = open(tmp[0][0],'r')
-    # lines = f.readlines()
-    # for i in start:
-    #     if(i[0][0]!= tmp[0][0]):
-    #         tmp = i
-    #         f.close()
-    #         f = open(tmp[0][0],'r')
-    #         lines = f.readlines()
-        
-    #     for j in range(i[0][1],i[1][1]+1):
-    #         if("CSSetShader" in lines[j]):
-    #             # print(lines[j])
-    #             for k in range(i[0][1],i[1][1]+1):
-    #                 new_file_list.append([i[0][0],k])
-    #                 # 解决于lines[j]有关的依赖
-    #                 solve_line_dependency(i[0][0],k,lines[k],graph,new_file_list)
-
-
-    # for i in drawvector.get_draw_vector("Dispatch"):
-    #     with open(i[0][0], 'r') as f:
-    #         lines = f.readlines()
-    #         for j in range(i[0][1],i[1][1]+1):
-    #             new_file_list.append([i[0][0],j])
-    #             # 解决于lines[j]有关的依赖
-    #             solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
-
-
-
-    # 保存部分的draw
-    for i in drawvector.get_target_drawvector(scene_begins_index,offset):
+    for i in drawvector.get_draw_vector("DrawIndexedInstanced"):
         with open(i[0][0], 'r') as f:
             lines = f.readlines()
             for j in range(i[0][1],i[1][1]+1):
                 new_file_list.append([i[0][0],j])
                 # 解决于lines[j]有关的依赖
                 solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+
+
+
+    # 保存部分的draw
+    # for i in drawvector.get_target_drawvector(scene_begins_index,offset):
+    #     with open(i[0][0], 'r') as f:
+    #         lines = f.readlines()
+    #         for j in range(i[0][1],i[1][1]+1):
+    #             new_file_list.append([i[0][0],j])
+    #             # 解决于lines[j]有关的依赖
+    #             solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
 
 
 
@@ -199,7 +179,7 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
             solve_dependency(graph,nodelist,src_path+filename,new_file_list) 
 
     # 保存部分的draw和Dispatch     
-    #solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
+    # solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
     new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
     create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
 
@@ -217,7 +197,7 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
 
 def upload_files(tmp_path,target_path,new_filename_0,inject_file):
     # 将inject文件中的内容添加到新的sdx文件中
-    path = "D:\\work\\3DMark_CloudGate-orgSize-FixFPS0.5-GT1\\ReplayDump\HW\\"
+    path = "D:\\work\\3DMark_FireStrike-Extreme-orgSize-FixFPS0.5-GT2\\ReplayDump\HW\\"
     files = os.listdir(path)
     with open(tmp_path+inject_file, 'r') as inj, open(target_path+new_filename_0, 'a') as new_file:
         lines = inj.readlines()

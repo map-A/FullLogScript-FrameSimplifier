@@ -59,9 +59,12 @@ def trim_files(src_path,target_path):
                         sentence = ""
                     else:
                         sentence += line
-        if sentence:
-            out_f.write(sentence + '\n')
-            print("trim successful")
+            if sentence:
+                out_f.write(sentence + '\n')
+            out_f.write("             ")
+    print("trim successful")
+    
+        
 
 def merge_files(src_path, target_path,start_index,target_index):
     with open(target_path, 'w') as target_file:

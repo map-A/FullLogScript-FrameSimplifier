@@ -5,12 +5,7 @@ first_secene=146
 save_secene=146
 number=1
 path1="${base_path}\\vector\\"
-path2="${base_path}\\vector\\3DMarkICFWorkload_0.sdx"
-
-
-echo "dumping frame"
-./qReplay/qReplay.exe -s $path2 --dumpF --hide
-mv $base_path\\ReplayDump\\ $base_path\\Frame_dump_origin\\
+path2="${base_path}temp\\3DMarkICFWorkload_0.sdx"
 
 simple_nums=21
 for (( i=1; i<=$simple_nums; i++ )); do
@@ -20,7 +15,8 @@ for (( i=1; i<=$simple_nums; i++ )); do
     mv $base_path\\frames\\ $base_path\\vector-F$save_secene\\
     mv $base_path\\ReplayDump\\ $base_path\\ReplayDump-F$save_secene\\
     sed -i '2s#axPath(Path = "..\\data\\; ..\\shader\\; ..\\LogDump\\");#axPath(Path = "..\\data\\; ..\\shader\\; ..\\LogDump\\;..\\ReplayDump-F'"$save_secene"'\\HW\\");#' $base_path\\vector-F$save_secene\\3DMarkICFWorkload_F${save_secene}_0.sdx
-
+    # mv $base_path\\vector-F$save_secene\\ $target_path
+    # mv $base_path\\ReplayDump-F$save_secene\\ $target_path
 
     find $path1 -name "*.inject" -type f -delete
     rm -rf $base_path\\temp\\

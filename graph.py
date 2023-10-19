@@ -65,7 +65,7 @@ must_add = set({'axdRelease','GetBuffer','IASetPrimitiveTopology','GenerateMips'
 
 # 为了生成一个inject文件
 copy_func = set()
-# copy_func = set({'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',})
+#copy_func = set({'CopyResource','CopyStructureCount','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',})
 
 
 

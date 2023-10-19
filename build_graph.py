@@ -229,20 +229,16 @@ def generate_inject_file(filename,inject_file,graph):
                                             # 现在可以把val_list中的资源当成一个整体dump下来
                                             ref_list = []
                                             graph.get_leaf(val,ref_list) # 获取了val的所在路径所有变量
-                                            
-                                            
-                                           
-                                        
-
                                             for ref  in ref_list:
                                                 file_pos = 'F'+ re.search(r'(\d+)\.sdx$', filename).group(1)
-                                                line_pos = 'L'+ str(idx)
+                                                # line_pose = 'L'+ str(idx)
+                                                line_pose = 'L'+str(len(lines)-1)
                                                 function= 'axdDumpResource('+res[0] + ', IID_ID3D11Resource, DXGI_FORMAT_UNKNOWN'
                                                 argumets = ref
                                                 save_type = ".bin"
                                                 if(ref_list[0][0:4] != "pBuf"):
                                                     save_type = ".dds"
-                                                new_resoure = "\"" + ref_list[0]+ "_"+  file_pos + "_"+ line_pos + save_type +"\");\n"
+                                                new_resoure = "\"" + ref_list[0]+ "_"+  file_pos + "_"+ line_pose + save_type +"\");\n"
                                                 inj.write(file_pos+', ' + line_pose+', ' + function+', ' + argumets+', 0, ' + new_resoure)                            
                             except:
                                 pass
@@ -268,7 +264,8 @@ def generate_inject_file(filename,inject_file,graph):
                                         ref_list = list(set(ref_list))
                                         for ref in ref_list:
                                             file_pos = 'F'+ re.search(r'(\d+)\.sdx$', filename).group(1)
-                                            line_pose = 'L'+ str(idx)
+                                            # line_pose = 'L'+ str(idx)
+                                            line_pose = 'L'+str(len(lines)-1)
                                             function= 'axdDumpResource('+res[0] + ', IID_ID3D11Resource, DXGI_FORMAT_UNKNOWN'
                                             argumets = ref
                                             # TODO:需要判断注入那种类型的资源，dds还是bin
@@ -307,7 +304,14 @@ def generate_final_inject_file(orgin_inject_file,final_inject_file,save_start_in
         fields = line.strip().split(',')
         if len(fields) >= 6 and int(fields[0][1:])<save_start_index:
             key = fields[5]
+            # if key not in data:
             data[key] = line
+            # else:
+            #     old_field = data[key].strip().split(',')
+            #     new_field = line.strip().split(',')
+            #     if int(old_field[1][2:])<int(new_field[1][2:]):
+            #         data[key] = line
+
 
 
     lines = []
