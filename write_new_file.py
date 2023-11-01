@@ -12,13 +12,27 @@ import shutil
 # 先试着截取1帧
 # 解决文件filename的依赖，把依赖保存到new_file_list中
 
+def get_resource_from_line(line,resource_list):
+    if is_other(line):
+        res = parse_statement(line)
+        try:
+            p_v = map(str.strip, res[3].split(","))
+            for i in p_v:
+                # 第一个是类型，第二个是变量名称，第三个是数组，第四个才是依赖
+                if(is_valid_variable(i)):
+                    # 当是合法的变量时候，应该去以res[i]去深度遍历所有依赖的节点。
+                    resource_list.append(i)
+                else:
+                    pass
+        except:
+            pass
+    elif is_object_func_call(line):
+        pass
+    elif is_func_call(line):
+        pass
+
 def solve_line_dependency(filename,line_pos,line,graph,new_file_list):
-    
-    if is_comment(line):
-        pass
-    elif is_empty(line):
-        pass
-    elif is_other(line):
+    if is_other(line):
         new_file_list.append([filename,line_pos])
         res = parse_statement(line)
         try:
@@ -72,30 +86,32 @@ def solve_dependency(graph,nodelists,filename,new_file_list):
                 break;
 
 
-def solve_other(graph,drawvector,new_file_list,scene_begins_index,offset):
-    # 把drawvector中pivote后面的new_file_list中
-    # 把dispatch 添加到new_file_list中
-    # 忽略所有的drawindex
+def solve_other(graph,draw_vectors,new_file_list,save_start_index):
+    # last_indices = {}
+    # result = []
+    # for i, item in enumerate(draw_vectors):
+    #     last_indices[tuple(item.get_resource())] = i
 
-    for i in drawvector.get_draw_vector("DrawIndexedInstanced"):
-        with open(i[0][0], 'r') as f:
-            lines = f.readlines()
-            for j in range(i[0][1],i[1][1]+1):
-                new_file_list.append([i[0][0],j])
-                # 解决于lines[j]有关的依赖
-                solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
+    # for i, item in enumerate(draw_vectors):
+    #     if last_indices[tuple(item.get_resource())] == i:
+    #         result.append(i)
 
+    # for i in result:
+    #     draw_vectors[i].set_is_save(True)
+        
 
-
-    # 保存部分的draw
-    # for i in drawvector.get_target_drawvector(scene_begins_index,offset):
-    #     with open(i[0][0], 'r') as f:
-    #         lines = f.readlines()
-    #         for j in range(i[0][1],i[1][1]+1):
-    #             new_file_list.append([i[0][0],j])
-    #             # 解决于lines[j]有关的依赖
-    #             solve_line_dependency(i[0][0],j,lines[j],graph,new_file_list)
-
+    for dr_v in draw_vectors:
+        if dr_v.get_is_save():
+            pos = dr_v.get_pos()
+            name_num = re.search(r'(\d+)\.sdx$', pos[0][0])
+            if name_num:
+                name_num = int(name_num.group(1))
+            if name_num<save_start_index:
+                with open(pos[0][0], 'r') as f:
+                    lines = f.readlines()
+                    for i in range(pos[0][1],pos[1][1]+1):
+                        new_file_list.append([pos[0][0],i])
+                        solve_line_dependency(pos[0][0],i,lines[i],graph,new_file_list)
 
 
 def create_new_sdx_file(new_file_list,save_start_index,new_filename):
@@ -139,7 +155,7 @@ def create_new_sdx_file(new_file_list,save_start_index,new_filename):
                     new_file.write(lines[line_num])
 
         
-def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,scene_begins_index,save_start_index,save_end_index,offset):
+def simplify_frames(graph,nodelist,draw_vectors,origin_path,src_path,target_path,save_start_index,save_end_index):
     """
     从save_start_index开始保存，到save_end_index结束，
     """
@@ -179,25 +195,14 @@ def simplify_frames(graph,nodelist,drawvector,origin_path,src_path,target_path,s
             solve_dependency(graph,nodelist,src_path+filename,new_file_list) 
 
     # 保存部分的draw和Dispatch     
-    # solve_other(graph,drawvector,new_file_list,scene_begins_index,offset)
+    solve_other(graph,draw_vectors,new_file_list,save_start_index)
     new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(save_start_index)+'_0'+".sdx", filenames[0])
     create_new_sdx_file(new_file_list,save_start_index,target_path+new_filename_0)
 
 
-    # 删除子文件夹和文件
-    # for f in os.listdir(src_path):
-    #     full_path = os.path.join(src_path, f)
-    #     if os.path.isfile(full_path):
-    #         os.remove(full_path)
-    #     elif os.path.isdir(full_path):
-    #         shutil.rmtree(full_path)
-    # shutil.rmtree(src_path)
-      
-
-
 def upload_files(tmp_path,target_path,new_filename_0,inject_file):
     # 将inject文件中的内容添加到新的sdx文件中
-    path = "D:\\work\\3DMark_FireStrike-Extreme-orgSize-FixFPS0.5-GT2\\ReplayDump\HW\\"
+    path = os.path.dirname(os.path.dirname(tmp_path))+r"\\ReplayDump\\HW\\"
     files = os.listdir(path)
     with open(tmp_path+inject_file, 'r') as inj, open(target_path+new_filename_0, 'a') as new_file:
         lines = inj.readlines()
@@ -233,5 +238,4 @@ def upload_files(tmp_path,target_path,new_filename_0,inject_file):
                     index = m.group(2)
                     # axdUpdateSubresourcesFromFile(pCtx_0, IID_ID3D11Resource, pTex2D_105, 3, 1, "pTex2D_105_F0_L47346_s3.dds", 0);
                 l ="axdUpdateSubresourcesFromFile(" + use_obj+','+fields[3]+','+obj_name+', '+index+', 1, "' + i +'", 0);\n'
-            # print(l)
                 new_file.write(l)

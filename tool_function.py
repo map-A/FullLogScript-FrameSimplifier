@@ -61,7 +61,6 @@ def trim_files(src_path,target_path):
                         sentence += line
             if sentence:
                 out_f.write(sentence + '\n')
-            out_f.write("             ")
     print("trim successful")
     
         

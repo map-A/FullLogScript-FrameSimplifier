@@ -1,6 +1,9 @@
 # 根据已有的资源创建了另一个资源
 # 原有的资源状态没有改变，创建另一个等同于改变了它的状态
 # device 的函数, 一定要添加的，创建了资源
+import copy
+
+
 device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeometryShader','CreateQuery',
                'CreateUnorderedAccessView','CreateInputLayout','CreateDepthStencilView',
                'CreateVertexShader','CreatePixelShader','CreateShaderResourceView','CreateTexture3D',
@@ -41,17 +44,20 @@ draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed',
                         'DrawInstanced','DrawInstancedIndirect',})
 
 
-obj_set_func =set({'ClearDepthStencilView','PSSetShader',
-                          'RSSetState','VSSetConstantBuffers',
-                          'GSSetConstantBuffers','IASetIndexBuffer',
-                          'PSSetConstantBuffers', 'RSSetViewports',
-                          'GSSetShaderResources','PSSetSamplers',
-                          'PSSetShaderResources','IASetInputLayout',
-                          'GSSetShader','OMSetDepthStencilState',
-                          'VSSetShader','VSSetShaderResources',
-                          'DiscardResource','DrawInstancedIndirect','DiscardView','OMSetRenderTargets','OMSetBlendState',
-                          'IASetVertexBuffers','OMSetRenderTargetsAndUnorderedAccessViews',
-                          'ClearRenderTargetView','GenerateMips','ClearUnorderedAccessViewFloat'})
+obj_set_func =set({
+    'IASetIndexBuffer','IASetVertexBuffers','IASetInputLayout',
+    'VSSetShader','VSSetConstantBuffers','VSSetShaderResources',
+    'HSSetShader','HSSetConstantBuffers','HSSetShaderResources','HSSetSamplers',
+    'TSSetShader','TSSetConstantBuffers','TSSetShaderResources',
+    'DSSetShader','DSSetConstantBuffers','DSSetShaderResources','DSSetSamplers',
+    'GSSetShader','GSSetConstantBuffers','GSSetShaderResources','GSSetSamplers',
+    'RSSetState','RSSetViewports',
+    'PSSetShader','PSSetConstantBuffers','PSSetShaderResources','PSSetSamplers',
+    'OMSetDepthStencilState','OMSetRenderTargets','OMSetBlendState','OMSetRenderTargetsAndUnorderedAccessViews',
+    'ClearDepthStencilView','ClearRenderTargetView','CopyStructureCount', 
+    'DiscardView','DiscardResource',
+    'CSSetShader','CSSetConstantBuffers','CSSetShaderResources','CSSetSamplers','CSSetUnorderedAccessViews',
+    'GenerateMips','ClearUnorderedAccessViewFloat'})
 
 
 map_func = set({'Map','Unmap','axdUpdatePtrFromFileInCtx11'})
@@ -159,7 +165,9 @@ class Graph:
         visited = set()
         while stack:
             cur = stack.pop()
-            temp.append(cur)
+            temp.append(cur.strip())
+            if(" " in cur):
+                print(cur,"dadaasdasd")
             if cur not in visited:
                 visited.add(cur)
                 neibo = self.get_neighbors(cur)
@@ -168,9 +176,12 @@ class Graph:
                         if nxt.id not in visited:
                             stack.append(nxt.id)
         for i in temp:
-            if i[0:4]=="pBuf" or i[0:4]=="pTex" or i == "pSwap_0_buf_0": 
-            #or i[0:3]=="pCS" or i[0:3]=="pDS" or i[0:3]=="pGS" or i[0:3]=="pHS" or i[0:3]=="pPS" or i[0:3]=="pVS" or i[0:3]=="pIn":
-                res.append(i)    
+            if i[0:4]=="pBuf" or i[0:4]=="pTex" or i == "pSwap_0_buf_0" or i[0:4]=="pSRV" or i[0:4]=="pUAV"  or i[0:4]=="RTV" or i[0:4]=="DSV": 
+                res.append(i)
+        # for i in temp:
+        #     if i[0:4]=="pBuf" or i[0:4]=="pTex" or i == "pSwap_0_buf_0": 
+        #     #or i[0:3]=="pCS" or i[0:3]=="pDS" or i[0:3]=="pGS" or i[0:3]=="pHS" or i[0:3]=="pPS" or i[0:3]=="pVS" or i[0:3]=="pIn":
+        #         res.append(i)    
         
 class NodeLists():
     def __init__(self):
@@ -205,54 +216,28 @@ class MapStack:
         return self.stack[-1]
     
 
-class DrawVector:
-    def __init__(self):
-        self.__drawVector__ = {}        
-        self.__pivote__ = []
+class DrawVector():
+    # 将一个脚本文件集划分成一段一段的draw或者dispatch
+    def __init__(self,start_pos,end_pos,is_save=False):
+        self.__pos__ = [start_pos,end_pos]
+        self.__is_save__ = is_save
+        self.__resource__ = []
 
-    def add_draw(self,draw_type,start_pos,end_pos):
-        if draw_type not in self.__drawVector__:
-            self.__drawVector__[draw_type] = []
-        self.__drawVector__[draw_type].append([start_pos,end_pos])
-
-    def add_pivote(self,pos):
-        self.__pivote__ = pos
-
-    def get_draw_vector(self,draw_type):
-        if draw_type not in self.__drawVector__:
-            return []
-        return self.__drawVector__[draw_type]
+    def get_is_save(self):
+        return self.__is_save__
     
+    def get_pos(self):
+        return self.__pos__
+    def get_resource(self):
+        return self.__resource__
+    
+    def set_resource(self,resource):
+        self.__resource__ = resource
+    def set_is_save(self,is_save):
+        self.__is_save__ = is_save
+
     def print_drawvector(self):
         for i in self.__drawVector__:
             print(i)
 
-    def print_pivote(self):
-        print(self.__pivote__)
     
-    
-    def get_target_drawvector(self,scene_begins_index,offset):
-        """
-        offset: 小于-1 不获取任何draw
-        offset: -1 表示获取从pivote开始到结束的所有draw
-        offset: >0 表示获取pivote到 pivote+i 的所有draw
-        """
-        if offset <-1:
-            return []
-        
-        # 根据pivote获取drawvector,某一个draw在pivote的后面，某一个draw在pivote的前面
-        start_pos = 0
-        for i in range(0,len(self.__drawVector__['Draw'])):
-            if self.__drawVector__['Draw'][i][0][0] == self.__pivote__[0]: # 在同一个文件中
-                if(self.__drawVector__['Draw'][i][0][1] > self.__pivote__[1]):
-                    if(offset==-1):
-                        start_pos = i-1
-                        break
-                        # return self.__drawVector__['Draw'][i-1:]
-                    else:
-                        return self.__drawVector__['Draw'][i-1:i+offset]
-        for i in range(0,len(self.__drawVector__['Draw'])):
-            if(str(scene_begins_index)+".sdx" in self.__drawVector__['Draw'][i][0][0]):
-                end_pos = i-1
-                return self.__drawVector__['Draw'][start_pos:end_pos]
-        return []
