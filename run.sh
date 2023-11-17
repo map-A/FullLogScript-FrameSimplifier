@@ -2,7 +2,7 @@
 # 定义文件路径变量
 base_path="D:\\work\\3DMark_FireStrike-orgSize-FixFPS0.5-GT1\\"
 first_secene=112
-save_secene=119
+save_secene=112
 number=1
 
 
