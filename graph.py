@@ -46,10 +46,10 @@ class Graph:
     def add_vertex(self, node):
         if node.id not in self.vertices:
             self.vertices[node.id] = []
-            self.vertices[node.id].append(node)
+        self.vertices[node.id].append(node)
         if self.edges.get(node.id) is None:
             self.edges[node.id] = [] # 为了防止出现没有邻居节点的情况，所以这里先初始化
-            self.edges[node.id].append(node)
+        self.edges[node.id].append(node)
         
 
 
@@ -77,19 +77,20 @@ class Graph:
         #从属性值为node_id的开始深度遍历，遍历的结果存到res数组中
         stack = [node_id]
         visited = set()
-        while stack:
+        while stack:  
             cur = stack.pop()
             if cur not in visited:
                 visited.add(cur)
                 neibo = self.get_neighbors(cur)
                 
                 if neibo:
+
                     for nxt in neibo:
                         res.append(nxt.line_pos)
                         if nxt.id not in visited:
                             stack.append(nxt.id)
         
-    
+
     def get_leaf(self,nodeid,res):
         # 获取nodeid的叶子节点
         temp = []
@@ -97,7 +98,7 @@ class Graph:
         visited = set()
         while stack:
             cur = stack.pop()
-            temp.append(cur.strip())
+            temp.append(cur)
             if cur not in visited:
                 visited.add(cur)
                 neibo = self.get_neighbors(cur)
@@ -120,11 +121,19 @@ class Graph:
         """
         
         resource_list = get_resource_from_line(line)
-        node_list = [Node(res,pos,line,is_var_statement.__str__) for res in resource_list]
-        for node in node_list:
-            self.add_vertex(node)
-            # 将变量名与引用的其他变量连接起来  
-            self.add_edge(node_list[0],node)      
+        # node_list = [Node(res,pos,line,is_var_statement.__str__) for res in resource_list]
+        ext_node_list = [] # 已经存在的节点
+        dontext_node_list = [] # 不存在的节点
+        for i in resource_list:
+            node = Node(i,pos,line,is_object_func_call.__str__)
+            if not self.has_vertex(node.id):
+                self.add_vertex(node)
+                dontext_node_list.append(node)
+            else:
+                ext_node_list.append(node)
+        for ex in ext_node_list:
+            for dont in dontext_node_list:
+                self.add_edge(dont,ex)
 
 
     def add_object_func_call_to_graph(self,pos,line,nodelists,mapstack,dx_version):
@@ -132,11 +141,28 @@ class Graph:
         if dx_version==12:
             device_func = dx12_device_func
         res = parse_object_func_call(line) # 解析对象调用
-        if res[1] in device_func:
-
+        if res[1] in must_add_func_12:
             resource_list = get_resource_from_line(line) # 获取资源列表
+            # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们
+            ext_node_list = [] # 已经存在的节点
+            dontext_node_list = [] # 不存在的节点
+            for i in resource_list:
+                node = Node(i,pos,line,is_object_func_call.__str__)
+                nodelists.add_node(node)
+                if not self.has_vertex(node.id):
+                    self.add_vertex(node)
+                    dontext_node_list.append(node)
+                else:
+                    ext_node_list.append(node)
+            for ex in ext_node_list:
+                for dont in dontext_node_list:
+                    self.add_edge(dont,ex)
 
-            
+        
+   
+
+        elif res[1] in device_func:
+            resource_list = get_resource_from_line(line) # 获取资源列表
             # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们
             ext_node_list = [] # 已经存在的节点
             dontext_node_list = [] # 不存在的节点
@@ -152,9 +178,32 @@ class Graph:
             for ex in ext_node_list:
                 for dont in dontext_node_list:
                     self.add_edge(dont,ex)
+        elif res[1] in dx12_device_func2:
+            # CreateUnorderedAccessView 这类api资源已经创建了，但是还没有加入到图中，所以这里需要加入到图中
+            resource_list = get_resource_from_line(line)
+            # # 默认最后一个是不存在的资源
+            node_list = [Node(res,pos,line,is_object_func_call.__str__) for res in resource_list]
+            ext_node_list = [i for i in node_list[:-1]] # 已经存在的节点
+            dontext_node_list = [node_list[-1]] # 不存在的节点
+            
+            self.add_vertex(node_list[-1])
+            # if self.has_vertex(node_list[-1].id):
+            #     a = self.get_neighbors(node_list[-1].id)
+            #     for i in a:
+            #         i.print()
+            for ex in ext_node_list:
+                for dont in dontext_node_list:
+                    # if resource_list[-1]=="pDescHeap_5_cpuH":
+                    #     print("pDescHeap_5_cpuH",ex.id,dont.id)
+                    self.add_edge(dont,ex)
+            # if resource_list[-1]=="pDescHeap_5_cpuH":
+            #     a = self.get_neighbors("pDescHeap_5_cpuH")
+            #     for i in a:
+            #         i.print()
+
             
             
-        elif res[1] in commitRes_obj_func:    
+        elif dx_version ==12 and res[1] in commitRes_obj_func:    
             # dx12的map和unmap 默认添加
             resource_list = get_resource_from_line(line)
             if res[1] =="Map":
@@ -167,8 +216,6 @@ class Graph:
                         dontext_node_list.append(node)
                     else:
                         ext_node_list.append(node)
-                if ("pReadRange = range_16, pp" in line):
-                    print(dontext_node_list[0].id,ext_node_list[0].id,ext_node_list[1].id)
                 for ex in ext_node_list:
                     for dont in dontext_node_list:
                         self.add_edge(dont,ex)
@@ -189,13 +236,9 @@ class Graph:
             for i in resource_list:
                 node = Node(i,pos,line,is_object_func_call.__str__)
                 nodelists.add_node(node)
+        
+        
 
-        # elif res[1] in must_add:
-        #     node = Node(res[1],pos,line,is_object_func_call.__str__)
-        #     nodelists.add_node(node)
-
-        # elif res[1] in other_func:
-        #     pass
 
     def add_func_call_to_graph(self,pos,line,dx_version):
         func_table = func_set
@@ -212,7 +255,8 @@ class Graph:
                     self.add_vertex(node)
                     dontext_node_list.append(node)
                 else:
-                    ext_node_list.append(node)         
+                    ext_node_list.append(node)
+
 
             for ex in ext_node_list:
                 for dont in dontext_node_list:
@@ -262,9 +306,10 @@ class Graph:
                             nodelists.add_node(node)
                         elif(res[0] in other_func):
                             pass
+                    elif is_func_asigment(line):
+                        self.add_func_asigment_to_graph([filename,line_pos],line)
+                    
                     line_pos = line_pos+1
-
-
 
     def read_dx12_to_graph(self,file_collection,nodelists,mapstack):
         for filename in file_collection.file_list:
@@ -272,25 +317,27 @@ class Graph:
             with open(os.path.join(file_collection.temp_path,filename), "r") as f:
                 for line in f:
                     if is_var_statement(line):
-                        if "D3D12_RESOURCE_DESC resDesc_3[1" in line:
-                            print(filename,line_pos)
                         self.add_other_line_to_graph([filename,line_pos],line)
 
                     elif is_object_func_call(line):
+                        
                     #    axdAddCpuDescriptorHandle(pDescHeap_2, 1)=pDescHeap_2_cpuH_1;
                         self.add_object_func_call_to_graph([filename,line_pos],line,nodelists,mapstack,file_collection.dx_version)
                         
                     elif is_func_call(line):
-                        if "axdHintResourceGpuVirtualAddr" in line:
+                        # ret = parse_func_call(line)
+                        # if ret[0] in must_add_func:
+                        if "axdHintResourceGpuVirtualAddr" in line or "axMemCpy" in line:
                             resource_list = get_resource_from_line(line)
                             node = Node(resource_list[0],[filename,line_pos],line,is_func_call.__str__)
                             nodelists.add_node(node)
                             self.add_vertex(node)
-
+                        elif  "D3DCompileFromFile" in line:
+                            node = Node("MUST",[filename,line_pos],line,is_func_call.__str__)
+                            nodelists.add_node(node)
                         self.add_func_call_to_graph([filename,line_pos],line,file_collection.dx_version)
 
                     elif is_func_asigment(line):
-                        # axdHintResourceGpuVirtualAddr
                         self.add_func_asigment_to_graph([filename,line_pos],line)
                         
 

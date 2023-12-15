@@ -1,28 +1,47 @@
 
 
 dx12_device_func = set({
-    "CreateCommandQueue","CreatePlacedResource","CreateRootSignature","CreateShaderResourceView",
-    "CreateComputePipelineState","CreateGraphicsPipelineState","CreateCommittedResource","CreateRenderTargetView",
-    "CreateCommandSignature","CreateHeap","CreateCommandList","CreateSampler",
-    "CreateDepthStencilView","CreateDescriptorHeap","CreateUnorderedAccessView","CreateFence",
-    "CreateCommandAllocator","CreateSwapChainForHwnd","GetBuffer","ResizeBuffers1",
+
+    "CreateComputePipelineState","CreateGraphicsPipelineState","CreateSwapChainForHwnd","CreateFence", "GetBuffer",
+    "CreateHeap","CreateCommandList",
+    
+    "CreateDescriptorHeap","CreateCommandSignature","CreatePlacedResource","CreateRootSignature",
+    "CreateCommandQueue",            
 })
 
+dx12_device_func2 = set({
+                        
+                         })
 
-# ID3D12DescriptorHeap* ppDescHeaps_204[0x2] = (pDescHeap_1, pDescHeap_4);
-# pCmdList_21->SetDescriptorHeaps(NumDescriptorHeaps = 0x2, ppDescriptorHeaps = ppDescHeaps_204);
 
-pCmdList = set({"SetGraphicsRootConstantBufferView","IASetIndexBuffer","SetPipelineState","IASetPrimitiveTopology",
-                "ClearRenderTargetView","Close","OMSetRenderTargets","Reset",
-                "SetGraphicsRootDescriptorTable","RSSetViewports","SetDescriptorHeaps","DrawIndexedInstanced",
-                "RSSetScissorRects","IASetVertexBuffers","ClearDepthStencilView","SetGraphicsRootSignature",
-                "ResourceBarrier","SetComputeRootDescriptorTable","SetComputeRootConstantBufferView","SetComputeRootSignature",
-                "ClearUnorderedAccessViewUint","CopyBufferRegion","DiscardResource","SetComputeRoot32BitConstants",
-                "SetGraphicsRoot32BitConstants","DrawInstanced","Dispatch","CopyTextureRegion",
-                "ClearUnorderedAccessViewFloat","CopyResource","ExecuteIndirect",
+pCmdList = set({"SetGraphicsRootConstantBufferView",
+                "SetPipelineState","SetGraphicsRootDescriptorTable","SetDescriptorHeaps","SetGraphicsRootSignature","SetComputeRoot32BitConstants",
+                "SetComputeRootDescriptorTable",  "SetComputeRootConstantBufferView","SetComputeRootSignature","SetGraphicsRoot32BitConstants",
+                "IASetIndexBuffer","IASetPrimitiveTopology","IASetVertexBuffers",
+                "RSSetScissorRects", "RSSetViewports","OMSetRenderTargets",
+                "Close","Reset",
+                "DrawIndexedInstanced","DrawInstanced","Dispatch",
+                "ResourceBarrier",
+                "ClearRenderTargetView","ClearDepthStencilView","ClearUnorderedAccessViewFloat","ExecuteIndirect",
+                "ClearUnorderedAccessViewUint","DiscardResource",
+                "CopyTextureRegion","CopyBufferRegion","CopyResource",
+                
                 })
+must_add_func_12 = set({"ResizeBuffers1", 
+                     "SetEventOnCompletion","Signal","Wait","OMSetRenderTargets",
+                     "Reset","Present","RSSetViewports",
+                     "CopyBufferRegion","CopyTextureRegion","CopyResource", # 提升正确值
+                     "CreateCommittedResource",
+                     "CreateCommandAllocator", 
+                     "CreateRenderTargetView", 
+                     "CreateDepthStencilView",
+                    "CreateShaderResourceView",
+                    "CreateUnorderedAccessView", # 1M
+                     "CreateSampler", # 会影响最后正确值
+                     "CreateConstantBufferView",# 会影响最后正确值
 
-pCmdList_set_func = set({"SetDescriptorHeaps","Close"})
+                     })
+pCmdList_set_func = set({"SetDescriptorHeaps","Close","ExecuteCommandLists"})
 
 fence_obj_func = set({"SetEventOnCompletion","Signal","Wait","GetCompletedValue"})
 

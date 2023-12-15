@@ -104,26 +104,44 @@ class InjectFile():
                 with open(os.path.join(self.save_path,filename), "r") as f:
                     index = 0
                     lines = f.readlines()
+                    inject_source_queue = {}
                     for line in lines:
                         if is_object_func_call(line):
-                            resouce_list = get_resource_from_line(line)
                             ret = parse_object_func_call(line)
+                            if ret[1]=="Close":
+                                # 将inject_source_queue中所有ret[0]所属的inject行写入文件
+                                for l in inject_source_queue[ret[0]]:
+
+                                    # l 的行数修改为当前行
+                                    new_l = l.replace('L'+ str(len(lines)),'L'+str(index))
+                                    inj.write(new_l)
+                                del inject_source_queue[ret[0]]
+                                index = index+1
+                                continue
+
                             ref_list = []
                             tt = ret[0]
-                            if tt=="pDev12_0":
+                            if "pCmdList" not in tt:
                                 tt = "pCmdList_1"
+                            
+
+                            resouce_list = get_resource_from_line(line)
                             for val in resouce_list:
                                 graph.get_leaf(val,ref_list) # 获取了val的所在路径所有变量
                             if(len(ref_list)!=0):
-                                #TODO：多个resource共用一个var name
                                 file_pos = 'F'+ re.search(r'(\d+)\.sdx$', filename).group(1)
                                 line_pose = 'L'+ str(len(lines))
+                                # TODO: line pose 需要修改
                                 argumets = "|".join(ref_list)
                                 save_type = ".bin"
                                 new_resoure = "\"new_resource" +  "_"+  file_pos + "_"+ line_pose + save_type +"\");\n"
                                 upload_function="axdDumpResourceInCmdList("
                                 function= upload_function+tt + ',IID_ID3D12Resource,'
-                                inj.write(file_pos + ","+ line_pose +","+ function + argumets+ ","+ "DXGI_FORMAT_UNKNOWN, "+'0, ' + new_resoure)
+                                if tt not in inject_source_queue:
+                                    inject_source_queue[tt] = []
+                                inject_source_queue[tt].append(file_pos + ","+ line_pose +","+ function + argumets+ ","+ "DXGI_FORMAT_UNKNOWN, "+'0, ' + new_resoure)
+
+                                #inj.write(file_pos + ","+ line_pose +","+ function + argumets+ ","+ "DXGI_FORMAT_UNKNOWN, "+'0, ' + new_resoure)
                         elif is_func_call(line):
                             ret = parse_func_call(line)
                             if(ret[0]=="axdRelease"):
@@ -143,34 +161,43 @@ class InjectFile():
 
         # 读取到内存中删去重复的
         data = {}
+        
         for line in lines:
             fields = line.split(',')
 
             if len(fields) >= 7 and int(fields[0][1:])<save_start_index:
                 new_field = copy.deepcopy(fields)
                 resources = fields[4].split('|')
-                resource_type = ".bin"
                 for resource in resources:
                     if self.dont_save_resources.get(resource) and int(fields[0][1:]) <= min(self.dont_save_resources[resource]):
                         continue
-                    new_field[4] = resource.strip()
-                
 
-                    # todo： 设置如何获取资源的类型
-                    a = []
-                    graph.get_leaf(resource,a)
-                    for aa in a:
-                        if re.match(r'resDesc_\d+$',aa):
-                            resource_type = get_resource_type(graph.get_node(aa)[0].line)
-                    new_field[7] = "\""+ new_field[4] + "_"+new_field[0]+ "_"+ new_field[1] + resource_type +"\");\n"
-                    # pCommitRes_8_GpuAddr_601856
-                    if re.match(r'pCommitRes_\d+$',new_field[4]):
-                    # if ("Res_" in new_field[4]):
-                        data[new_field[4]] = ', '.join(new_field)
-        
-        lines = []
-        for line in data.values():
-            lines.append(line)
+                    new_field[4] = resource.strip()
+                    resource_type = ".bin"
+
+                    if re.match(r'pCommitRes_\d+$',new_field[4]) or re.match(r'pPlaceRes_\d+$',new_field[4]):
+                        a = []
+                        graph.get_leaf(new_field[4],a)
+                        for aa in a:
+                            
+                            if re.match(r'resDesc_\d+$',aa):
+                                pattern = re.compile(r'.*MipLevels\s*=\s*(\w+)')
+                                subresource_num = '1'
+                                t = pattern.findall(graph.get_node(aa)[0].line)
+                                if len(t)>0: 
+                                    subresource_num =t[0]
+                                resource_type = get_resource_type(graph.get_node(aa)[0].line)
+                                new_field[7] = "\""+ new_field[4] + "_"+new_field[0]+ "_"+ new_field[1] + resource_type +"\");\n"
+                                new_field[6] = subresource_num
+                                data[new_field[4]] = ', '.join(new_field)
+                    
+                
+                       
+                           
+            
+            lines = []
+            for line in data.values():
+                lines.append(line)
             
                 
 
@@ -183,6 +210,14 @@ class InjectFile():
         # 将排序后的行写入新的文件
         with open(os.path.join(self.save_path,self.inject_file_name), 'w') as fin_inj:
             for l in lines:
-                fin_inj.write(l)    
+                a = l.split(',')
+                sub_num = int(a[6])
+                new_a = copy.deepcopy(a)
+                for i in range(sub_num):
+                    new_a[6] = str(i)
+                    if sub_num>1:
+                        # print(a[7], a[7].replace(".","_s"+str(i)+"."))
+                        new_a[7] = a[7].replace(".","_s"+str(i)+".")
+                    fin_inj.write(",".join(new_a))
 
 

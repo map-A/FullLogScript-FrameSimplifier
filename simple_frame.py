@@ -6,9 +6,12 @@
 # 建图后该怎么进行重构，
 # 先试着截取1帧
 # 解决文件filename的依赖，把依赖保存到new_file_list中
+from copy import deepcopy
 import os
 import re
 import shutil
+import struct
+import subprocess
 from line_util import *
 from dx11_config import *
 
@@ -33,37 +36,66 @@ class SimpleFrame():
         resource_list = get_resource_from_line(line)
         
         dependency_node = []
-        for i in resource_list:
+        for i in resource_list: 
             graph.dfs(i,dependency_node)
-            new_file_list.extend(dependency_node)
+        new_file_list.extend(dependency_node)
 
-        if("(pDescHeap_2_cpuH_1);" in line):
-            for i in dependency_node:
-                print(i)
-            a = graph.get_neighbors("pDescHeap_2_cpuH_1")
-            for ii in a:
-                print(ii.print())
-            return
+        
 
+    def solve_other(self,graph,draw_vectors,file_collection,target_path,new_filename_0):
+        # 将draw_vector 的内容保存到new_filelist,draw_vector 都是实实在在的内容，写到s_dx0后面
+        with open(os.path.join(target_path,new_filename_0), 'a') as new_file:
+            for filename,draws, in draw_vectors.get_all().items():
+                for draw in draws:
+                    if draw.get_is_contain_cssetshader():
+                        # 重写该文件的dispath 的内容
+                        # 先是上传之前dump下来的buffer
+                        save_lines = deepcopy(draw.get_draw_lines())
+                        draw.clear_draw_lines()
+                        for k,v, in draw.get_dump_resource().items():
+                            if("pBuf_" in k or "pTex" in k):
+                                new_file.write('axdUpdateSubresourcesFromFile(pCtx_0, IID_ID3D11Resource,'+k +', 0, 1,"'+ v +'", 0);\n')
+                        # 修改iniconuts
+                        # 怎么显示修改呢？这个要dump之后才能修改
+                        for line in save_lines:
+                            if "ID3D11UnorderedAccessView*" in line:
+                                new_file.write(line)
+                                uav_resouces = get_resource_from_line(line)[1:]
+                                uav_resouce_ini_count = []
+                                for uav_res in uav_resouces:
+                                    while not os.path.exists(os.path.join(file_collection.dump_path,draw.get_dump_resource()[uav_res])):
+                                        # 检测需要的数据是否有,没有，执行一遍qreplay
+                                        cmd = r".\\qReplay\\qReplay.exe -s "+ os.path.join(file_collection.refactor_path,file_collection.file_list[0])
+                                        print(cmd)
+                                        p1 = subprocess.Popen(cmd, shell=True)
+                                        p1.wait()
+                                    with open(os.path.join(file_collection.dump_path,draw.get_dump_resource()[uav_res]), 'rb') as file:
+                                    # 读取4个字节，即一个DWORD，采用小端模式('<')
+                                        dword = struct.unpack('<I', file.read(4))
+                                        uav_resouce_ini_count.append(str(dword[0]))
+                            elif "UINT uavIniCounts_" in line:
+                                # 根据uav_resouce_ini_count修改
+                                pattern = r'\((.*?)\)'
+                                matches = re.findall(pattern, line)
 
-    def solve_other(self,graph,draw_vectors,new_file_list):
-        for dr_v in draw_vectors:
-            if dr_v.get_is_save():
-                pos = dr_v.get_pos()
-                name_num = re.search(r'(\d+)\.sdx$', pos[0][0])
-                if name_num:
-                    name_num = int(name_num.group(1))
-                if name_num<self.save_start_index:
-                    with open(pos[0][0], 'r') as f:
-                        lines = f.readlines()
-                        for i in range(pos[0][1],pos[1][1]+1):
-                            new_file_list.append([pos[0][0],i])
-                            self.solve_line_dependency(pos[0][0],i,lines[i],graph,new_file_list)
+                                # 替换括号内的数字
+                                if matches:
+                                    updated_string = re.sub(pattern, f'({",".join(uav_resouce_ini_count)})',line)
+                                    new_file.write(updated_string)
+                                else:
+                                    print("未找到括号内的数字")
+                            elif 'CSSetUnorderedAccessViews' in line:
+                                new_file.write(line)
+                            elif 'CSSetShader' in line or 'Dispatch' in line:
+                                pass
+                            else:
+                                pass
+                                # new_file.write(line)
+
 
 
 
     def solve_dependency(self,graph,nodelists,filename,new_file_list):
-        print(filename,len(new_file_list))
         with open(filename, 'r') as f:
             line_pos = 0
             for line in f:
@@ -101,7 +133,7 @@ class SimpleFrame():
         with open(os.path.join(file_collection.temp_path,file_collection.file_list[0]), 'r') as f:
             line_pos = 0
             for line in f.readlines():
-                if line_pos<3 or "swapDesc" in line or "Present" in line: #前4行必须保留
+                if line_pos<4 or "swapDesc" in line or "Present" in line: #前4行必须保留
                     new_file_list.append([file_collection.file_list[0],line_pos])
                 line_pos = line_pos+1
 
@@ -111,8 +143,8 @@ class SimpleFrame():
             print("produce "+ new_filename)
             shutil.copy(os.path.join(file_collection.src_path,file_collection.file_list[i]), os.path.join(target_path,new_filename))
             self.solve_dependency(graph,nodelist,os.path.join(file_collection.temp_path,file_collection.file_list[i]),new_file_list)
-        # 保存部分的draw和Dispatch   
-        # solve_other(graph,draw_vectors,new_file_list,save_start_index)
+        # 保存部分的draw和Dispatch
+    
         new_filename_0 = re.sub(r'(\d+)\.sdx$',"F"+str(self.save_start_index)+'_0'+".sdx", file_collection.file_list[0])
         
         
@@ -154,6 +186,7 @@ class SimpleFrame():
                     for line_num in line_numbers:
                         new_file.write(lines[line_num])
         if file_collection.dx_version==11:
+            self.solve_other(graph,draw_vectors,file_collection,target_path,new_filename_0)
             self.upload_files_dx11(inject_file,target_path,new_filename_0)
         elif file_collection.dx_version==12:
             self.upload_files_dx12(inject_file,target_path,new_filename_0)
@@ -202,34 +235,33 @@ class SimpleFrame():
         # 将inject文件中的内容添加到新的sdx文件中
         path = os.path.join(os.path.dirname(os.path.dirname(inject_file.save_path)),"ReplayDump\HW")
         files = os.listdir(path)
+    
         with open(os.path.join(inject_file.save_path,inject_file.inject_file_name), 'r') as inj, open(os.path.join(target_path,new_filename_0), 'a') as new_file:
+            new_file.write("axPath(Path = \"..\ReplayDump\HW\;\");\n")
             lines = inj.readlines()
             for line in lines:
                 # 拼凑 inject文件中的每一行
+                # F117, L233, axdDumpResourceInCmdList(pCmdList_1, IID_ID3D12Resource, pCommitRes_23, DXGI_FORMAT_UNKNOWN,1, "pCommitRes_23_F117_L233_s1.dds");
                 fields = line.strip().split(',')
                 use_obj = fields[2].strip().split('(')[1]
                 obj_name = fields[4]
+                subresource = int(fields[6])
                 obj_name_resource = fields[7].split(')')[0]
                 new_obj_name_resources = []
-                index = '0'
-                pattern = r'\"(.+)\.(.+)\"'
                 
+                pattern = r'\"(.+)\.(.+)\"'
                 match = re.search(pattern, obj_name_resource)
                 if match:
                     for file in files:
-                        if match.group(1) in file:
+                        if match.group(1)+"_" in file:
                             new_obj_name_resources.append(file)
-                if len(new_obj_name_resources)>1:
-                    def sort_key(f):
-                        m = re.search(r'(.+)_s(\d+)\.(.+)', f)
-                        if m: 
-                            return (int)(m.group(2))
-                    new_obj_name_resources.sort(key=sort_key)
 
-                for i in new_obj_name_resources:
-                    m = re.search(r'(.+)_s(\d+)\.(.+)', i)
-                    if m is not None: 
-                        # index= '0'
-                        index = m.group(2)
-                    l ="axdUpdateSubresourcesFromFile(" + "pCmdQue_1"+','+fields[3]+','+obj_name+', '+index+', 1, "' + i +'", 0);\n'
+
+                
+                # axdUpdateSubresourcesFromFile(pCmdQue_1, IID_ID3D12Resource, pCommitRes_29, 6, 1, "pCommitRes_29_f121_l2358_s6_submit_F200_L9493.dds", 0);
+                if(new_obj_name_resources!=[]):
+                    l ="axdUpdateSubresourcesFromFile(" + "pCmdQue_1"+','+fields[3]+','+obj_name+', '+fields[6] + ', 1, "' + new_obj_name_resources[0] +'", 0);\n'
                     new_file.write(l)
+            new_file.write("ID3D12CommandList* ppCmdList_trim[1] = (pCmdList_14);\n")
+            new_file.write("pCmdQue_1->ExecuteCommandLists(NumCommandLists = 1, ppCommandLists = ppCmdList_trim);\n")
+        

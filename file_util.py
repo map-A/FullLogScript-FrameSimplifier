@@ -5,13 +5,17 @@ import shutil
 
 # 读取某个文件夹下所有文件名到列表
 class FileCollection():
-    def __init__(self,src_path,temp_path) -> None:
+    def __init__(self,src_path,temp_path,refactor_path,dump_path,end_index) -> None:
         self.src_path = src_path
         self.temp_path = temp_path
+        self.refactor_path = refactor_path
+        self.dump_path = dump_path
         self.file_list = []
+        self.end_index = end_index
         self.read_dir()
         self.trim_files(self.temp_path)
         self.dx_version = self.get_dx_version()
+        
         
 
     def read_dir(self):
@@ -19,7 +23,7 @@ class FileCollection():
             print(self.src_path+' does not exist')
             sys.exit()
         for filename in os.listdir(self.src_path):
-            if filename.endswith(".sdx") and "_" in filename and filename.split("_")[1][:-4].isdigit():
+            if filename.endswith(".sdx") and "_" in filename and filename.split("_")[1][:-4].isdigit() and int(filename.split("_")[1][:-4])<=self.end_index:
                 self.file_list.append(filename)
        
         self.file_list.sort(key=lambda x: int(x.split("_")[1][:-4].split(".")[0]))

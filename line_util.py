@@ -144,8 +144,9 @@ def parse_var_state_line(string,line_map):
     :param string
     :return:line_map将声明按照kv存储
     """
+
     # match = re.match(r'(\w+\*?)\s+(\w+\*?)\[(.*?\)\]\s*=\s*\(.*\)', string)
-    pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*\(.*\)'
+    pattern = r'(\w+\*?)\s*(\w+\*?)(\[.*?\]*)\s*=\s*\((.*)\);'
     match = re.match(pattern, string)
      
     if match:
@@ -154,45 +155,17 @@ def parse_var_state_line(string,line_map):
         line_map["var_name"] = match.group(2)
         line_map["array_size"] = match.group(3)
         # 提取结构体内的字段
-    field_str = re.search(r'\((.*)\)', string).group(1)
     
-    fields = re.findall(r'(\w+)\s*=\s*([^,]+)', field_str)
-    if "gpStateDesc_" in string:
-        #TODO:这里有问题，需要解决
-        for field in fields:
-            field_name, field_value = field
-            line_map[field_name]=field_value
-        return
-
-    line_map["set_value"] = []
-    p = field_str.split(" ")
-    pp = [i.split(",") for i in p ]
-    for i in pp:
-        a = [ii.strip("()") for ii in i]
-        for j in a:
-            if  len(j.strip('='))>0:
-                line_map["set_value"].append(j)
-
-    if fields ==[]:
-        line_map["set_value"] = field_str
-        return
-    # 递归解析字段
-    for field in fields:
-        field_name, field_value = field
-        # # 如果值是结构体初始化语句，递归解析
-        if '(' in field_value:
-            parse_var_state_line(field_str,line_map)
-            continue
-        line_map[field_name] = field_value
-    
-    line_map["append"] = []
-    p = field_str.split(" ")
-    pp = [i.split(",") for i in p ]
-    for i in pp:
-        a = [ii.strip("()") for ii in i]
-        for j in a:
-            if  len(j.strip('='))>0:
-                line_map["append"].append(j)
+    assign_part = re.sub(' ','',match.group(4))
+    pattern1 = r'(\w+)=\(*([\w.,()]*)\)*,'
+    matches = re.findall(pattern1, assign_part)
+    line_map["assign_value"] = []
+    if matches:
+        for i in matches:
+            line_map[i[0]] = i[1].strip(")")
+    else:
+        for i in assign_part.split(','):
+            line_map["assign_value"].append(i)
 
 def parse_func_assign_to_var(string):
     # axdAddCpuDescriptorHandle(pDescHeap_4, 3)=pDescHeap_4_cpuH_3;
@@ -271,8 +244,8 @@ def get_resource_from_line(line):
 
 def get_resource_type(line):
     if is_var_statement(line):
-        line_map = {}
-        parse_var_state_line(line,line_map)
-        if line_map["Dimension"] in texture_type:
-            return ".dds"
+        for  i in texture_type:  
+            if line.find(i) != -1:
+                return ".dds"        
     return ".bin"
+

@@ -29,19 +29,21 @@ if __name__ == "__main__":
 
     tmp_path = args.src_path+r"temp\\" # 新的src path，原有的变成origin_path
     target_path = args.src_path +r"frames\\"
+    refactor_path = args.src_path +r"refactor\\"
+    dump_path = args.src_path +r"ReplayDump\HW\\"
 
     # 读取文件到file_collection中
-    file_collection = FileCollection(args.src_path+"vector\\",tmp_path)
+    file_collection = FileCollection(args.src_path+"vector\\",tmp_path,refactor_path,dump_path,simplify_frames.save_end_index)
     file_collection.merge_files(args.src_path+r"merge\\",0,simplify_frames.save_start_index)
     
     # 用这些文件内容构建图
     graph = Graph()
     nodelist = NodeLists()
     mapstack = MapStack()
-    draw_vectors = []
+    draw_vectors = DrawVector()
     if file_collection.dx_version==11:
         graph.read_dx11_to_graph(file_collection,nodelist,mapstack)
-        dx11_read_to_draw_vector(file_collection,draw_vectors)
+        dx11_read_to_draw_vector(file_collection,draw_vectors,graph)
     elif file_collection.dx_version==12:
         graph.read_dx12_to_graph(file_collection,nodelist,mapstack)
     else:
@@ -49,8 +51,8 @@ if __name__ == "__main__":
         sys.exit()
 
     # 用这些文件内容构建draw_vector
-    
-    
+
+
  
     
 
@@ -67,7 +69,8 @@ if __name__ == "__main__":
         print("dx version error")
         sys.exit()
 
-    # cmd = r".\\qReplay\\qReplay.exe -s "+ os.path.join(file_collection.temp_path,file_collection.file_list[0]) +" --inject "+ inject_file.inject_file_name+ " --hide"
+    # cmd = r".\\qReplay\\qReplay.exe -s "+ os.path.join(file_collection.temp_path,file_collection.file_list[0]) +" --inject "+ inject_file.inject_file_name
+    # # + " --hide"
     # print(cmd)
     # p1 = subprocess.Popen(cmd, shell=True)
     # p1.wait()
