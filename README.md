@@ -6,6 +6,16 @@
 初始有脚本：0，1，2，3，n.sdx,在某一帧 `i`开始显示画面，现在直接想提取帧 `i`，省去中间sdx文件
 结果：生成两个sdx文件，0.sdx 文件，1.sdx 文件
 
+## Dependency
+
+项目依赖于qReplay,trimdx,来dump数据，ExtractScriptResource.exe，请将这三个可执行文件放在同级目录下。
+
+-qReplay\qreplay.exe
+
+-ExtractScriptResource.exe
+
+-Trimdx.exe
+
 ## Usage
 
 ``python main.py``
