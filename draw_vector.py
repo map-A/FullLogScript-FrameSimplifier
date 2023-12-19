@@ -103,7 +103,7 @@ def dx11_read_to_draw_vector(file_collection,draw_vectors,graph):
                     # 先构建dump语句
                     if not is_create_buffer:
                         f.write('D3D11_BUFFER_DESC bufDesc_for_dispatch[1] =(ByteWidth = 0x10,Usage = D3D11_USAGE_DEFAULT,BindFlags = D3D11_BIND_UNORDERED_ACCESS,CPUAccessFlags = 0x00000000,MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS,StructureByteStride = 0x0,);\n')
-                        f.write('D3D11_SUBRESOURCE_DATA bufData_for_dispatch[1] =(pSysMem = file(pBuf_2129_init.bin),SysMemPitch = 0x10,SysMemSlicePitch = 0x10,);\n')
+                        f.write('D3D11_SUBRESOURCE_DATA bufData_for_dispatch[1] =(pSysMem = file(pBuf_for_dispatch.bin),SysMemPitch = 0x10,SysMemSlicePitch = 0x10,);\n')
                         f.write('pDev11_0->CreateBuffer(pDesc = bufDesc_for_dispatch, pInitialData = bufData_for_dispatch, ppBuffer = pBuf_for_dispatch);\n')
                         is_create_buffer = True
 

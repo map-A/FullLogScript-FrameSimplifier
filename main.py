@@ -69,11 +69,11 @@ if __name__ == "__main__":
         print("dx version error")
         sys.exit()
 
-    # cmd = r".\\qReplay\\qReplay.exe -s "+ os.path.join(file_collection.temp_path,file_collection.file_list[0]) +" --inject "+ inject_file.inject_file_name
-    # # + " --hide"
-    # print(cmd)
-    # p1 = subprocess.Popen(cmd, shell=True)
-    # p1.wait()
+    cmd = r".\\qReplay\\qReplay.exe -s "+ os.path.join(file_collection.temp_path,file_collection.file_list[0]) +" --inject "+ inject_file.inject_file_name
+    # + " --hide"
+    print(cmd)
+    p1 = subprocess.Popen(cmd, shell=True)
+    p1.wait()
 
     # # 开始简化生成新的sdx文件
     simplify_frames.simplify_frames(file_collection,graph,nodelist,draw_vectors,inject_file,target_path)
