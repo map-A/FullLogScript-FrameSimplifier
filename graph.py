@@ -137,11 +137,12 @@ class Graph:
 
 
     def add_object_func_call_to_graph(self,pos,line,nodelists,mapstack,dx_version):
-        device_func = dx11_device_func 
+        device_func = dx11_device_func
+        res = parse_object_func_call(line) # 解析对象调用
         if dx_version==12:
             device_func = dx12_device_func
-        res = parse_object_func_call(line) # 解析对象调用
-        if res[1] in must_add_func_12:
+
+        if res[1] in must_add_func_12 and dx_version==12:
             resource_list = get_resource_from_line(line) # 获取资源列表
             # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们
             ext_node_list = [] # 已经存在的节点
@@ -178,7 +179,7 @@ class Graph:
             for ex in ext_node_list:
                 for dont in dontext_node_list:
                     self.add_edge(dont,ex)
-        elif res[1] in dx12_device_func2:
+        elif res[1] in dx12_device_func2 and dx_version==12: 
             # CreateUnorderedAccessView 这类api资源已经创建了，但是还没有加入到图中，所以这里需要加入到图中
             resource_list = get_resource_from_line(line)
             # # 默认最后一个是不存在的资源
@@ -231,7 +232,7 @@ class Graph:
             #         nodelists.add_node(node)
                     
             #         mapstack.pop()
-        elif res[1] in pCmdList_set_func:
+        elif res[1] in pCmdList_set_func and dx_version==12:
             resource_list = get_resource_from_line(line) # 获取资源列表
             for i in resource_list:
                 node = Node(i,pos,line,is_object_func_call.__str__)
@@ -243,7 +244,6 @@ class Graph:
     def add_func_call_to_graph(self,pos,line,dx_version):
         func_table = func_set
         res = parse_func_call(line) # 解析对象调用
-        
         if res is not None and res[0] in func_table:
             resource_list = get_resource_from_line(line) # 获取资源列表
             # 如果在创建函数中，会根据已有的资源创建一个对象，然后连接起他们

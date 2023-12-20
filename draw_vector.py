@@ -77,7 +77,7 @@ def dx11_read_to_draw_vector(file_collection,draw_vectors,graph):
                         draw_vectors.add_draw(filename,dv) # 某个文件的dispatch
                         draw_lines.clear()
                         resource_list.clear()
-                        is_save = True  
+                        is_save = True
             
             dv = Draw(draw_lines,"Present",resource_list,False)
             draw_vectors.add_draw(filename,dv)
@@ -89,8 +89,8 @@ def dx11_read_to_draw_vector(file_collection,draw_vectors,graph):
             os.makedirs(file_collection.refactor_path)
         with open(os.path.join(file_collection.refactor_path,filename), "w") as f:
             # 对文件进行重写        
-            # 然后对每个draw进行重写，添加需要dump的资源
-
+            
+            # 然后对每个draw进行重写，添加需要dump的资源，为了dump下数据
             for draw in draw_vectors.get_draw(filename):
                 if not draw.get_is_contain_cssetshader():
                     for lines in draw.get_draw_lines():

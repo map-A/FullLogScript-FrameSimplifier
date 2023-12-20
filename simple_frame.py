@@ -174,7 +174,6 @@ class SimpleFrame():
         # 根据分类的行号生成新的0.sdx文件内容
         with open(os.path.join(target_path,new_filename_0), 'w') as new_file:
             for filename, line_numbers in content_map.items():
-                # 指定文件不参与生成
                 name_num = re.search(r'(\d+)\.sdx$', filename)
                 if name_num:
                     name_num = int(name_num.group(1))

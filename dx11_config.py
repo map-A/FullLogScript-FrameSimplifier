@@ -15,6 +15,7 @@ CS_stage_func = set({'CSSetShader','CSSetConstantBuffers','CSSetShaderResources'
 #draw_stage_func = set({"Dispatch"})
 draw_stage_func = set({'Draw','DrawIndexedInstanced','DrawIndexed','DrawAuto',
                         'Dispatch','DispatchIndirect','DrawIndexedInstancedIndirect','DrawInstanced','DrawInstancedIndirect',})
+
 draw_stage_func1 = set({'Draw','DrawIndexedInstanced','DrawIndexed','DrawAuto',
                         'DispatchIndirect','DrawIndexedInstancedIndirect','DrawInstanced','DrawInstancedIndirect',})
 
@@ -30,9 +31,9 @@ dx11_device_func = set({'CreateSwapChain','CreateRenderTargetView','CreateGeomet
                 'CreateUnorderedAccessView1','CreateFence',"CreateRasterizerState1",
                 "CreateDXGIFactory1","CreateSwapChain",
                 'CopyResource','CopyCounter','CopyTiles','CopyTileMappings','CopyBufferRegion','CopySubresourceRegion',"GetBuffer",
-                'ClearState', 'ClearDepthStencilView','ClearRenderTargetView','ClearUnorderedAccessViewFloat',
-                'OMSetDepthStencilState',
-                 'DiscardView','DiscardResource',"ClearState",
+
+
+                 
                 })
 
 
